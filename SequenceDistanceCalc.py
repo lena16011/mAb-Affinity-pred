@@ -137,3 +137,12 @@ for i in range(len(dlevNames)):
     file.write(str(locals()[dlevNames[i]]))
     file.close()
 
+# delete the values that have a similarity that is lower than 80%
+# Therefore the dicts are filtered for distances < 0.2
+
+def filter_dist(dict, similarity):
+    return {k:v for (k,v) in dict.items() if 1-v > similarity}
+
+filtlevDist3A = filter_dist(levDist3A, 0.8)
+
+# leeres dict...
