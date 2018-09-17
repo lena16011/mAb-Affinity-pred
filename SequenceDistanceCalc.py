@@ -143,6 +143,50 @@ for i in range(len(dlevNames)):
 def filter_dist(dict, similarity):
     return {k:v for (k,v) in dict.items() if 1-v > similarity}
 
-filtlevDist3A = filter_dist(levDist3A, 0.8)
+filtlevNames = []
+for i in range(4):
+    for j in range(3):
+        filtlevNames.append(str("filtlevDist" + str(i) + list[j]))
 
-# leeres dict...
+for i in range(len(dataNames)):
+    locals()[filtlevNames[i]] = filter_dist(locals()[levNames[i]], 0.8)
+
+
+# filter the original data for the found similar sequences and create new dataframes
+filtdataNames = []
+for i in range(4):
+    for j in range(3):
+        filtdataNames.append(str("filtData" + str(i) + list[j]))
+
+for j in range(len(dataNames)):
+    locals()[filtdataNames[j]] = pd.DataFrame(columns = data0A.columns)
+    for i in range(len(locals()[dataNames[j]][['Read#']])):
+        if locals()[dataNames[j]].loc[i, 'Read#'] in locals()[filtlevNames[j]].keys():
+            locals()[filtdataNames[j]].loc[i] = locals()[dataNames[j]].loc[i]
+
+# Template;
+#filtData3A = pd.DataFrame(columns = data3A.columns)
+#for i in range(len(data3A[['Read#']])):
+#    if data3A.loc[i, 'Read#'] in filtlevDist3A.keys():
+#        filtData3A.loc[i] = data3A.loc[i]
+
+# write the filtered sequences to files
+filtFilePath = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/similarity_80Files/'
+
+sim80Names = []
+for i in range(4):
+    for j in range(3):
+        sim80Names.append(str("simfilt80Data" + str(i) + list[j]))
+for i in range(len(sim80Names)):
+    locals()[filtdataNames[i]].to_csv(str(filtFilePath + sim80Names[i] + '.txt'),
+                                      sep = '\t', index = False)
+# Template;
+#filtData0A.to_csv(str(filtFilePath+'simfilt80Data0A'), sep = '\t', index = False)
+
+
+
+
+
+# hopeless try to make list comprehension...
+#filtData3A = [data3A.iloc[i, :] for i in data3A.loc[i:, 'Read#'] if data3A.loc[i:, 'Read#'] == filtlevDist3A.keys()]
+#iltData3A = [data3A.iloc[i, :] for i in range(len(data3A)) if data3A.loc[i:, 'Read#'] in filtlevDist3A.keys()]
