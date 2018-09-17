@@ -171,7 +171,7 @@ for j in range(len(dataNames)):
 #        filtData3A.loc[i] = data3A.loc[i]
 
 # write the filtered sequences to files
-filtFilePath = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/similarity_80Files/'
+filtFilePath = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/similarity80_Files/'
 
 sim80Names = []
 for i in range(4):
