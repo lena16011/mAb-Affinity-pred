@@ -234,7 +234,7 @@ target_entry = data_uniqCDR3[data_uniqCDR3['CDR3_AA']==targetCDR3]
 
 # filter the distance matrix
 #filt_dist_all_80 = filter_dist(lev_dist_all, 0.8)
-##################################################### !!!!!!!!!!!!! there ares no unique ReadIDs! solve that!
+####
 
 
 ###### (1) Calculate the distance matrix for ALL sequences
