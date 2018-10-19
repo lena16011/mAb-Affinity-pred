@@ -48,8 +48,6 @@ colors = ['red']*5 + ['green'] + ['red']*20
 k1=0.4
 
 # show the network graph
-#fig = plt.figure(figsize=(10,6))
-#plt.subplot(121)
 plt.plot()
 G1 = nx.Graph()
 # # Add the nodes
@@ -78,7 +76,6 @@ print(str('Number of edges in the filtered node (threshold: ' + str(thres) + '):
 print(str('Number of edges connected to our target node: ' + str(n_tar_edges)))
 
 # set up the network graph
-#plt.subplot(122)
 k = 0.6
 plt.plot()
 G2 = nx.Graph()

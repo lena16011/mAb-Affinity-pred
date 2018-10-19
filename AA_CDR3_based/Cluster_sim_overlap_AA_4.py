@@ -34,6 +34,8 @@ print(len(data_average_60))
 print(len(data_complete_20.loc[data_complete_20['CDR3_AA'].isin(data_average_60.CDR3_AA)]))
 #142 sequences (of 199/179 are overlapping)
 
+
+
 ###### (1) Load in the data from the similarity filtering (80%)
 # as only in the datasets 2B, 2C and 3A sequences are present, we only need to load these files;
 filt80_data_2B = pd.read_csv('/media/lena/LENOVO/Dokumente/Masterarbeit/data/filtered_files/similarity80_FilesAA/simfilt80DataAA2B.txt',
@@ -153,6 +155,8 @@ overlap1.to_csv(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/S
 # 26 sequences occur in all
 
 overlap_com_av = data_average_60.loc[data_average_60['CDR3_AA'].isin(data_complete_20.CDR3_AA)]
+overlap_com_av.to_csv(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/VDJ_comparison/overlap_clustering_av_com.txt'),
+                         sep='\t', index=False)
 # 142 sequences occur in all
 
 # save the sequences, that occur in complete, average and simfilt80
@@ -210,7 +214,7 @@ data_uniq_length = pd.read_csv(str(file_path + 'data_uniq_length_CDR3.txt'), ind
 data_AP = data_uniq_length.loc[data_uniq_length['CDR3_AA'].isin(labels_AP.CDR3_AA)]
 
 # save it
-data_AP.to_csv(str(file_path + 'Summary/affinity_propagation/tar_tot_data_AP.txt'),
+data_AP.to_csv(str(file_path + 'Summary/affinity_propagation/tar_clust_data_AP.txt'),
                         sep = '\t', index=False)
 
 # count the overlapping data between complete and average linkage;
@@ -230,9 +234,12 @@ overlap_AP_sim70.to_csv(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clus
 overlap_AP_sim80.to_csv(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Summary/overlap_AP_clustering_simfilt80.txt'),
                          sep='\t', index=False)
 
-####### Visualization in a Venn plot
+
+
+#################### Visualization in a Venn plot
 import matplotlib_venn as venn
 from matplotlib import pyplot as plt
+
 # define the sets (in our case the sequences)
 set_av60 = set(data_average_60['CDR3_AA'])
 set_com20 = set(data_complete_20['CDR3_AA'])
@@ -240,6 +247,7 @@ set_sim80 = set(filt80_data_all['CDR3_AA'])
 set_sim70 = set(filt70_data_all['CDR3_AA'])
 set_com_av = set(overlap_com_av['CDR3_AA'])
 set_AP = set(data_AP['CDR3_AA'])
+
 
 # create a figure
 fig = plt.figure(figsize=(13,7))
@@ -260,22 +268,32 @@ for text in v2.set_labels:
     text.set_fontsize(7)
 
 fig.suptitle("Venn diagram of the clustering and the similarity filtering", fontsize=16)
-fig.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Venn_similarity_clustering_AP_comparison.pdf')
+# fig.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Venn_similarity_clustering_AP_comparison.pdf')
 fig.show()
+
+
 
 # add venn plot with the clustering(complete & average), similarty filtering and the AP clustering
 fig = plt.figure(figsize=(7,5))
 
-# set up the venn plot
-plt.plot()
+# set up the venn subplot
+plt.subplot(121)
 v1 = venn.venn3(subsets=[set_AP, set_sim80, set_com_av],
                 set_labels=('Clustering, affinity propagation', 'Similarity 80%', 'Clustering, av. & compl. linkage'))
 
 for text in v1.set_labels:
     text.set_fontsize(7)
 
+# set up venn subplot
+plt.subplot(122)
+v2 = venn.venn2(subsets=[set_AP, set_sim80],
+                set_labels=('Clustering, affinity propagation', 'Similarity 80%'))
+
+for text in v2.set_labels:
+    text.set_fontsize(7)
+
 fig.suptitle('Venn diagram of the clustering and the similarity filtering', fontsize=16)
-fig.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Venn_similarity_clustering_AP_comparison2.pdf')
+# fig.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Venn_similarity_clustering_AP_comparison2.pdf')
 fig.show()
 
 
