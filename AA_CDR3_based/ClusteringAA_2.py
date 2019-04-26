@@ -1,5 +1,12 @@
+'''
+This script is just made to test and elaborate the hierarchical clustering script that was
+then run on the Euler cluster
+'''
+
+
 import pandas as pd
 import numpy as np
+
 
 ## 1. Load the WHOLE distance matrix
 #dir_name = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/uniqCDR3_DistMatrix.txt'

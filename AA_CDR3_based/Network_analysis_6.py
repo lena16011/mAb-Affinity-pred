@@ -18,7 +18,7 @@ data_raw = pd.read_csv(in_file_path, sep='\t')
 # our target sequence has node nr. 5;
 ###
 
-# now calculate the distance between the sequences to use this measure later as weights for the nodes;
+# now calculate the distance between the sequences to use this measure later as weights for the edges;
 col=range(len(data_raw.CDR3_AA))
 dist_matrix = pd.DataFrame(columns=col)
 data_ser = pd.DataFrame(columns=col)
@@ -60,9 +60,10 @@ plt.title(str('Network plot with all sequence edges k=' + str(k1)))
 # plt.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/NW_plot_allseq.pdf')
 plt.show()
 
-########### NETWORK GRAPH WITH "SIMILARITY"  BASED FILTERING
 
-# add the graph with the filtered edges with the set threshhold
+########### NETWORK GRAPH WITH "SIMILARITY"  BASED FILTERING (filtered edges with the set similarity threshhold)
+
+# add the graph with the
 # set threshold
 thres = 0.85
 data_filt = data_tup.copy()
@@ -70,6 +71,7 @@ data_filt = data_tup.copy()
 #  we apply the distance threshold from which we assume they are not connected anymore;
 [data_filt.remove(tup) for tup in data_tup_all if tup[2] < thres]
 n_tar_edges = len([tup for tup in data_filt if (tup[0]==5 or tup[1]==5)])
+
 
 print(str('Number of edges in the unfiltered node: ' + str(len(data_tup_all))))
 print(str('Number of edges in the filtered node (threshold: ' + str(thres) + '): ' + str(len(data_filt))))

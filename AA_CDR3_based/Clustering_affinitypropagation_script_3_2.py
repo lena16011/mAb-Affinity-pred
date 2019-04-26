@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import pandas as pd
 import numpy as np
-import os
 import sklearn.cluster as clust
 
 #### Affinity propagation try with unique length distance matrix
@@ -33,9 +32,11 @@ print(np.unique(cluster_labels))
 # save cluster labels
 cluster_labels_df = pd.DataFrame(cluster_labels)
 cluster_labels_df.to_csv('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Affinity_propagation/aff_prop_cluster_labels.txt',
-                      header=['cluster_nr'], index=True,
-                      sep='\t')
-# save the sequences that are in the same cluster as the target sequence
+                      header=['cluster_nr'], index=True, sep='\t')
+
+
+# save the sequences that are in the same cluster as the target sequence; tested with 300; target sequence
+# is not in entry 300
 target_index = 300
 seq_number = len(cluster_labels)
 # get the sequence indices of the sequences that are in the target cluster

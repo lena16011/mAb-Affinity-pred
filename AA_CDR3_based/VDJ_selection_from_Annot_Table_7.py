@@ -1,16 +1,9 @@
-
-'''
-
-Script to select the VDJ sequences from the Annotated Tabels that occur with our selected CDR3s;
-Further analysis of the sequence similarities and the lengths of the sequences
-
-'''
-
-
 import pandas as pd
 import stringdist
 
-######################### SELECTION OF VDJS FROM ANNOTATED TABLES FROM OVERLAP AP & SIMILARITY FILTERING 80%
+''' 
+SELECTION OF VDJS FROM ANNOTATED TABLES FROM OVERLAP AP & SIMILARITY FILTERING 80%
+'''
 
 # Load in the ess_HEL data sets (they were filtered only for unique VDJ nucleotide sequence)
 dir_name = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/filtered_files/'
@@ -83,11 +76,17 @@ data_filt = pd.DataFrame()
 for CDR3 in data_AP_sim80.CDR3_AA:
     data_filt = data_filt.append(data_all[data_all.CDR3_AA == CDR3])
 
-print(len(data_filt))
+
+# Print some info about the sequences
+print('Number of filtered sequences:', len(data_filt))
 # now we have 331 sequences
 
-print(len(data_filt.VDJ_AA.unique()))
+print('Number of unique VDJs:', len(data_filt.VDJ_AA.unique()))
 # 193 unique VDJs
+
+
+
+
 
 # save the file
 data_filt.to_csv(str(file_path + out_file1), sep='\t', index=None)
