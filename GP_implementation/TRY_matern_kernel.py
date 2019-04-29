@@ -4,8 +4,11 @@ import pandas as pd
 import stringdist as sd
 from sklearn.model_selection import train_test_split
 from scipy import optimize, linalg
-from data_processing import one_hot_encoding as ohc
+from GP_implementation import one_hot_encoding as ohc
 from sklearn.metrics.pairwise import euclidean_distances
+from GP_implementation import GP_fcts as GP
+
+
 
 
 
@@ -31,7 +34,7 @@ def matern_5_2_kernel(X, X_, hypers=1.0):
 
 def one_hot_encode_matern(seq_input):
     ''' convert an amino acid sequence into a one hot encoded matrix as nd array;
-    !!! for MATERN KERNEL !!!
+    Note: for Matern kernel
     Parameters:
         seq: amino acid sequence as string of amino acids (length = 115)
     Return:
@@ -58,11 +61,10 @@ def one_hot_encode_matern(seq_input):
 
     return X
 
-
 def predict_GP_mat(X_train, y_train, X_test, prams):
     """ Gaussian process regression predictions.
     Parameters:
-        X_train (np.ndarray): n x d training inputs
+        X_train (np.ndarray): n x d training inputs as one-hot encoded
         y_train (np.ndarray): n training observations
         X_test (np.ndarray): m x d points to predict
     Returns:
@@ -85,7 +87,6 @@ def predict_GP_mat(X_train, y_train, X_test, prams):
     v = np.diag(K_star_star) - np.dot(K_star.T, alpha)
     v = np.diag(v)
     return mu, v
-
 
 def neg_log_marg_likelihood_mat(log_prams, X, y):
     """ Calculate the negative log marginal likelihood loss.
@@ -115,3 +116,46 @@ def neg_log_marg_likelihood_mat(log_prams, X, y):
 
 
     return log_p_y_X
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### LOAD INPUT ####
+input_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/input/'
+input_f_seq = input_dir + 'Final_49_AA_from_geneious.csv'
+input_f_KD = input_dir + 'HC_KDvals.csv'
+
+# Load sequence data
+df_seq = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence'])
+
+# Load KD values and add them together to a new dataframe (remove samples that w/o measured KD value)
+KDs = pd.read_csv(input_f_KD, usecols=['SampleID', 'KD'], sep = ';')
+data = pd.merge(df_seq,KDs, on='SampleID')
+
+#### DATA PROCESSING ####
+
+# normalize data
+data['KD'] = GP.normalize_test_train_set(data['KD'])
+
+# split into train and test data
+X_train, X_test, y_train, y_test = GP.split_data(data, 5, r_state=123)
+
+# one-hot encode sequences
+X_train, X_test =
+
+mu, vars = predict_GP_mat(X_train, y_train, X_test, [0.5,1])
+
+
+
+
+
