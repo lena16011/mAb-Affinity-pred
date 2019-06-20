@@ -553,6 +553,7 @@ def cv_param_tuning_mat(X, y, k, init_param = [0.1, 10]):
     var_s = []
     y_s = []
     params_test = []
+    cycle_num = 1
 
     # loop for the CV
     for train_index, test_index in kf.split(X):
@@ -573,6 +574,8 @@ def cv_param_tuning_mat(X, y, k, init_param = [0.1, 10]):
         # next set of hyper prams
         prams_me = [np.exp(result.x[0])**2, np.exp(result.x[1])]
 
+        print(cycle_num)
+        cycle_num += 1
 
         # next used trained GP model to predict on test data
         mu, var = predict_GP_mat(X_train, y_train, X_test, prams_me)
