@@ -1,11 +1,5 @@
-import random
-import numpy as np
+
 import pandas as pd
-import stringdist as sd
-from sklearn.model_selection import train_test_split, KFold
-from scipy import optimize, linalg
-import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score, mean_squared_error
 import os
 from GP_implementation import GP_fcts as GP
 
