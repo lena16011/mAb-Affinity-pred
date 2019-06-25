@@ -52,7 +52,7 @@ GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nLD kernel'
               R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig = False, out_file=None)
 
 
-### BLOSUM$%
+### BLOSUM62
 
 # test inner cv loop for hyperparameter tuning in cv_param_tuning function
 k = 35
@@ -69,7 +69,7 @@ GP.correlation_plot(y_true, mus, cor_line=False, save_fig = False, out_file=None
 GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nLD kernel',
               R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig = False, out_file=None)
 
-### BLOSUM$%
+### PAM40%
 
 # test inner cv loop for hyperparameter tuning in cv_param_tuning function
 k = 35

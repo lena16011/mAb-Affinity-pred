@@ -6,6 +6,7 @@ from GP_implementation import GP_fcts as GP
 from GP_implementation import lazyCartProduct as catprod
 import random
 import matplotlib.pyplot as plt
+import math
 
 
 
@@ -19,27 +20,27 @@ input_train_KD = input_dir + 'HC_KDvals.csv'
 
 
 ## SET OUTPUT DIRECTORIES (for plots to save)
-dir_outLD = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/intermediate_testmut/'
+dir_out = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/intermediate_testmut/'
 
 # If the output directories do not exist, then create it
-if not os.path.exists(dir_outLD):
-    os.makedirs(dir_outLD)
+if not os.path.exists(dir_out):
+    os.makedirs(dir_out)
 
 
 
 
 
 ###### LOAD DATA #######
-df_seq = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence'])
+data = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence', 'KD'])
 
-# Load KD values and add them together to a new dataframe (remove samples that w/o measured KD value)
-KDs = pd.read_csv(input_train_KD, usecols=['SampleID', 'KD'])
-data = pd.merge(df_seq,KDs, on='SampleID')
 
-KDs_unnormalized = data
+###### DATA PROCESSING ######
+# normalize data
+data['KD_norm'] = GP.normalize_test_train_set(data['KD'])
 
-###### LOAD DATA ######
-df_seq = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence'])
+X_train = data['Sequence'].values
+y_train = data['KD_norm'].values
+
 
 
 
@@ -51,8 +52,8 @@ df_seq = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence'])
 AAs = pd.DataFrame()
 # get a matrix of characters (122 cols are position of Sequence [:121],
 # 49 rows are sequences [:48])
-for i in range(len(df_seq.Sequence[0])):
-    AAs[i] = [str(seq[i]) for seq in df_seq.Sequence]
+for i in range(len(data.Sequence[0])):
+    AAs[i] = [str(seq[i]) for seq in data.Sequence]
 
 
 
@@ -61,7 +62,7 @@ id_ls = []
 
 # initialize dictionary of AAs at positions (for creation of new sequences
 mut_dict = {}
-for i in range(len(df_seq.Sequence[0])):
+for i in range(len(data.Sequence[0])):
     if len(set(AAs.loc[:, i])) == 1:
         mut_dict[i] = list(set(AAs.loc[:, i]))
     else:
@@ -108,25 +109,6 @@ print("possible sequences from these combination {0:.1f} * 10^13".format(num_seq
 
 
 #### PREDICT AFFINITIES ####
-
-###### LOAD DATA #######
-df_train_seq = pd.read_csv(input_train_seq, usecols=['SampleID', 'Sequence'])
-
-# Load KD values and add them together to a new dataframe (remove samples that w/o measured KD value)
-KDs = pd.read_csv(input_train_KD, usecols=['SampleID', 'KD'])
-data = pd.merge(df_train_seq, KDs, on='SampleID')
-
-KDs_unnormalized = data
-
-# normalize data
-data['KD'] = GP.normalize_test_train_set(data['KD'])
-
-# defien test and train data
-X_train = data['Sequence'].values
-y_train = data['KD'].values
-# X_test = new_seq
-
-
 
 ########################### PREDICT LD KERNEL #######################
 #### make a loop of testing the LD kernel
@@ -181,82 +163,117 @@ y_train = data['KD'].values
 
 # get optimal noise parameter
 
-X_train_OH = GP.one_hot_encode_matern(X_train)
-opt_param = GP.get_params_mat(X_train_OH, y_train)
-# opt_param = [0.1,10]
+# X_train_OH = GP.one_hot_encode_matern(X_train)
+# opt_param = GP.get_params_mat(X_train_OH, y_train)
+# # opt_param = [0.1,10]
+#
+#
+# mu_all_mat = []
+# var_all_mat = []
+# steps = 1000
+#
+#
+# # store keys
+# positions = sorted(mut_dict)
+# # create object of combinations
+# combis = it.product(*(mut_dict[pos] for pos in positions))
 
 
-mu_all_mat = []
-var_all_mat = []
-steps = 1000
 
+####################### SLICE POSSIBLE SEQUENCES WITH ITERTOOLS FCT ######################
 
-# store keys
-positions = sorted(mut_dict)
-# create object of combinations
-combis = it.product(*(mut_dict[pos] for pos in positions))
-
-
-
-####################### SLICE POSSIBLE SEQUENCES  ######################
-
-
-for i in range(0, 1000000, steps):
-
-    slice = it.islice(combis, i, i + steps)
-
-    sl_list = list(slice)
-    X_test = np.asarray([''.join(x) for x in sl_list])
-    X_test_OH = GP.one_hot_encode_matern(X_test)
-
-    mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
-    mu_all_mat.append(mu_test)
-    var_all_mat.append(var_test)
-    print("samples processed: {}".format(i+steps))
-    # print("cycles left: {}".format((10000 - i + 500)/500)
-
-# save intermediate mus
-
-df_muvar = pd.DataFrame()
-df_muvar['mu'] = np.concatenate(mu_all_mat)
-df_muvar['var'] = np.concatenate(var_all_mat)
-
-df_muvar.to_csv(dir_outLD + 'intermed_muvars10_6.csv', sep=',')
-
-
+# for i in range(0, 1000000, steps):
+#
+#     slice = it.islice(combis, i, i + steps)
+#
+#     sl_list = list(slice)
+#     X_test = np.asarray([''.join(x) for x in sl_list])
+#     X_test_OH = GP.one_hot_encode_matern(X_test)
+#
+#     mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
+#     mu_all_mat.append(mu_test)
+#     var_all_mat.append(var_test)
+#     print("samples processed: {}".format(i+steps))
+#     # print("cycles left: {}".format((10000 - i + 500)/500)
+#
+# # save intermediate mus
+#
+# df_muvar = pd.DataFrame()
+# df_muvar['mu'] = np.concatenate(mu_all_mat)
+# df_muvar['var'] = np.concatenate(var_all_mat)
+#
+# df_muvar.to_csv(dir_out + 'intermed_muvars10_6.csv', sep=',')
+#
+#
 
 
 ####################### LAZY CARTESIAN PRODUCT ######################
+# from: https://gist.github.com/iamtheburd/78f816b1b0082956710107671c2ec83e#file-lazy-cartesian-product-py
+# explained:  https://hackernoon.com/generating-the-nth-cartesian-product-e48db41bed3f
+
+
+# number of sequences to generate randomly
+num_gen = 100000
+
+# specify number of sequences that should be processed once
+proc_step = 10000
+
 
 sets = [mut_dict[x] for x in mut_dict]
 
 # initialize lazy cartesina product object
 cp = catprod.LazyCartesianProduct(sets)
 
-# res1 = cp.entryAt(121)
-# res2 = cp.entryAt(121)
-# res3 = cp.entryAt(12524124635133)
-
-
 # generate 1000 random numbers
 random.seed(124)
+random_idx = random.sample(range(num_seqs), num_gen)
 
-random_idx = random.sample(range(num_seqs), 10000)
 
+##### TRAIN GP MODEL
 # get optimal noise parameter
 X_train_OH = GP.one_hot_encode_matern(X_train)
 opt_param = GP.get_params_mat(X_train_OH, y_train)
 # opt_param = [0.1,10]
 
 
-mu_all_mat_rsamp = []
-var_all_mat_rsamp = []
-X_test = np.asarray([''.join(cp.entryAt(x)) for x in random_idx])
-X_test_OH = GP.one_hot_encode_matern(X_test)
+
+####################### SLICE LAZY CARTESIAN PRODUCT ######################
+
+# write slice wise in file
+
+file_name = dir_out +'muvars_sliced_10_' + str(round(math.log(num_gen, 10))) + '.txt'
+with open(file_name, 'w') as f_out:
+
+    # write header to file
+    f_out.write("10^{} sequecnes processed in {}er steps\n".format(round(math.log(num_gen, 10)), proc_step))
+    f_out.write("{}\t{}\t{}\t{}\n".format('idx', 'random_idx', 'mus', 'vars'))
+
+    # loop through all seqs in steps
+    for i in range(0, num_gen, proc_step):
+
+        # initialize index list
+        idx_all = random_idx[i: i + proc_step]
+
+        # generate random sequences and encode them
+        X_test = np.asarray([''.join(cp.entryAt(x)) for x in idx_all])
+        X_test_OH = GP.one_hot_encode_matern(X_test)
+
+        # predict X_test
+        mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
+
+        # print for predicted
+        print("{} sequences predicted".format(i+proc_step))
+
+        # iterate through mus/vars to write in file
+        for j in range(len(idx_all)):
+            f_out.write("{}\t{}\t{}\n".format(idx_all[j], mu_test[j], var_test[j]))
+
+        print("{} sequences written in file".format(i + proc_step))
 
 
-mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
 
+
+################################## VISUALIZATION OF DISTRIBUTION (of course, gaussian)
 
 #### Plot the distribution of predicted values
 fig, axs = plt.subplots(1, 2, tight_layout=True)
