@@ -88,7 +88,7 @@ print("possible sequences from these combination {0:.1f} * 10^13".format(num_seq
 
 
 
-################ CREATE NEW SEQUENCES #################
+################ CREATE NEW SEQUENCES USING ITERTOOLS #################
 
 # # store keys
 # positions = sorted(mut_dict)
@@ -180,7 +180,7 @@ print("possible sequences from these combination {0:.1f} * 10^13".format(num_seq
 
 
 
-####################### SLICE POSSIBLE SEQUENCES WITH ITERTOOLS FCT ######################
+####################### SLICE POSSIBLE SEQUENCES WITH ITERTOOLS ######################
 
 # for i in range(0, 1000000, steps):
 #
@@ -269,6 +269,82 @@ with open(file_name, 'w') as f_out:
             f_out.write("{}\t{}\t{}\n".format(idx_all[j], mu_test[j], var_test[j]))
 
         print("{} sequences written in file".format(i + proc_step))
+
+
+
+
+
+
+
+
+################################## to do!!!!! ######################
+
+####################### GENERATE ALL POSSIBLE SEUQENCES ######################
+
+# specify number of sequences that should be processed once
+proc_step = 1000
+
+
+sets = [mut_dict[x] for x in mut_dict]
+
+# initialize lazy cartesina product object
+cp = catprod.LazyCartesianProduct(sets)
+
+idx_all = list(range(num_seqs))
+
+##### TRAIN GP MODEL
+# get optimal noise parameter
+X_train_OH = GP.one_hot_encode_matern(X_train)
+opt_param = GP.get_params_mat(X_train_OH, y_train)
+
+file_name = dir_out +'muvars_sliced_ALL.txt'
+with open(file_name, 'w') as f_out:
+
+    # write header to file
+    f_out.write("all {} sequecnes processed in {}er steps\n".format(num_gen, proc_step))
+    f_out.write("{}\t{}\t{}\t{}\n".format('random_idx', 'mus', 'vars'))
+
+    # loop through all seqs in steps
+    for i in range(0, num_gen, proc_step):
+
+        # initialize index list
+        idx_all = random_idx[i: i + proc_step]
+
+        # generate random sequences and encode them
+        X_test = np.asarray([''.join(cp.entryAt(x)) for x in idx_all])
+        X_test_OH = GP.one_hot_encode_matern(X_test)
+
+        # predict X_test
+        mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
+
+        # print for predicted
+        print("{} sequences predicted".format(i+proc_step))
+
+        # iterate through mus/vars to write in file
+        for j in range(len(idx_all)):
+            f_out.write("{}\t{}\t{}\n".format(idx_all[j], mu_test[j], var_test[j]))
+
+        print("{} sequences written in file".format(i + proc_step))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
