@@ -20,7 +20,8 @@ input_train_KD = input_dir + 'HC_KDvals.csv'
 
 
 ## SET OUTPUT DIRECTORIES (for plots to save)
-dir_out = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/gen_pred_seqs/'
+dir_out = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/intermediate_testmut/'
+dir_out_plot = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/gen_pred_seqs/'
 
 # If the output directories do not exist, then create it
 if not os.path.exists(dir_out):
@@ -123,20 +124,25 @@ opt_param = GP.get_params_mat(X_train_OH, y_train)
 
 ###### PREDICT RANDOM SAMPLE AT ONCE USING LAZY CARTESIAN PRODUCT ######################
 
+############## compare numpy save file option
+X_test = np.asarray([''.join(cp.entryAt(x)) for x in random_idx])
+X_test_OH = GP.one_hot_encode_matern(X_test)
 
-# X_test = np.asarray([''.join(cp.entryAt(x)) for x in random_idx])
-# X_test_OH = GP.one_hot_encode_matern(X_test)
-#
-# # predict X_test
-# mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
+# predict X_test
+mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
 
 
 
-###### SLICE LAZY CARTESIAN PRODUCT ######################
+
+
+
+
+
+
 
 # write slice wise in file
 
-file_name = dir_out +'muvars_sliced_10_' + str(round(math.log(num_gen, 10))) + '.txt'
+file_name = dir_out +'writefile_sl_10_' + str(round(math.log(num_gen, 10))) + '.txt'
 with open(file_name, 'w') as f_out:
 
     # write header to file
@@ -174,51 +180,51 @@ with open(file_name, 'w') as f_out:
 
 
 ####################### GENERATE ALL POSSIBLE SEUQENCES with threshold ######################
-
-# specify number of sequences that should be processed once
-proc_step = 1000
-
-
-sets = [mut_dict[x] for x in mut_dict]
-
-# initialize lazy cartesina product object
-cp = catprod.LazyCartesianProduct(sets)
-
-idx_all = list(range(num_seqs))
-
-##### TRAIN GP MODEL
-# get optimal noise parameter
-X_train_OH = GP.one_hot_encode_matern(X_train)
-opt_param = GP.get_params_mat(X_train_OH, y_train)
-
-file_name = dir_out +'muvars_sliced_ALL.txt'
-with open(file_name, 'w') as f_out:
-
-    # write header to file
-    f_out.write("all {} sequecnes processed in {}er steps\n".format(num_gen, proc_step))
-    f_out.write("{}\t{}\t{}\t{}\n".format('random_idx', 'mus', 'vars'))
-
-    # loop through all seqs in steps
-    for i in range(0, num_gen, proc_step):
-
-        # initialize index list
-        idx_all = random_idx[i: i + proc_step]
-
-        # generate random sequences and encode them
-        X_test = np.asarray([''.join(cp.entryAt(x)) for x in idx_all])
-        X_test_OH = GP.one_hot_encode_matern(X_test)
-
-        # predict X_test
-        mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
-
-        # print for predicted
-        print("{} sequences predicted".format(i+proc_step))
-
-        # iterate through mus/vars to write in file
-        for j in range(len(idx_all)):
-            f_out.write("{}\t{}\t{}\n".format(idx_all[j], mu_test[j], var_test[j]))
-
-        print("{} sequences written in file".format(i + proc_step))
+#
+# # specify number of sequences that should be processed once
+# proc_step = 1000
+#
+#
+# sets = [mut_dict[x] for x in mut_dict]
+#
+# # initialize lazy cartesina product object
+# cp = catprod.LazyCartesianProduct(sets)
+#
+# idx_all = list(range(num_seqs))
+#
+# ##### TRAIN GP MODEL
+# # get optimal noise parameter
+# X_train_OH = GP.one_hot_encode_matern(X_train)
+# opt_param = GP.get_params_mat(X_train_OH, y_train)
+#
+# file_name = dir_out +'muvars_sliced_ALL.txt'
+# with open(file_name, 'w') as f_out:
+#
+#     # write header to file
+#     f_out.write("all {} sequecnes processed in {}er steps\n".format(num_gen, proc_step))
+#     f_out.write("{}\t{}\t{}\t{}\n".format('random_idx', 'mus', 'vars'))
+#
+#     # loop through all seqs in steps
+#     for i in range(0, num_gen, proc_step):
+#
+#         # initialize index list
+#         idx_all = random_idx[i: i + proc_step]
+#
+#         # generate random sequences and encode them
+#         X_test = np.asarray([''.join(cp.entryAt(x)) for x in idx_all])
+#         X_test_OH = GP.one_hot_encode_matern(X_test)
+#
+#         # predict X_test
+#         mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
+#
+#         # print for predicted
+#         print("{} sequences predicted".format(i+proc_step))
+#
+#         # iterate through mus/vars to write in file
+#         for j in range(len(idx_all)):
+#             f_out.write("{}\t{}\t{}\n".format(idx_all[j], mu_test[j], var_test[j]))
+#
+#         print("{} sequences written in file".format(i + proc_step))
 
 
 
@@ -258,6 +264,25 @@ axs[1].title.set_text('Distribution of true KDs')
 
 plt.savefig(str(dir_out+'histogram_pred_seqs.png'))
 plt.show()
+
+
+
+####### get statistics for sequences; mean var and 0.3% threshold
+
+# calculate the mean and variance
+mean_mu = np.mean(mu_test)
+std_dev = np.std(mu_test)
+
+# if we take
+neg = round(mean_mu - 3* std_dev, 2)
+pos = round(mean_mu + 3* std_dev, 2)
+
+
+print("mean of 10^4 predicted values: {}\nStandard deviationet: {}".format(mean_mu, std_dev))
+print("negative threshhold to set (mu - 3*stdev): {}\npositive threshold to set (mu + 3*stdev): {}".format(neg, pos))
+
+
+
 
 
 
@@ -386,7 +411,48 @@ plt.show()
 #
 
 
+### test if np array stored is better
+# data_np = np.empty(shape=(num_gen, 3))
+# data_np[:, 0] = np.array(random_idx)
+# data_np[:, 1] = np.array(mu_test)
+# data_np[:, 2] = np.array(var_test)
+#
+# np.save(dir_out + 'np_10_4.txt', data_np)
+#
 
+
+###### SLICE LAZY CARTESIAN PRODUCT ######################
+
+# # TRY to save it in numpy array
+#
+# # initialize numpy array
+# data_save = np.ndarray(shape=(num_gen, 3) )
+#
+# # loop through all seqs in steps
+# for i in range(0, num_gen, proc_step):
+#
+#     # initialize index list
+#     idx_all = random_idx[i: i + proc_step]
+#
+#     # generate random sequences and encode them
+#     X_test = np.asarray([''.join(cp.entryAt(x)) for x in idx_all])
+#     X_test_OH = GP.one_hot_encode_matern(X_test)
+#
+#     # predict X_test
+#     mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
+#
+#     # print for predicted
+#     print("{} sequences predicted".format(i+proc_step))
+#
+#     # iterate through mus/vars to write in file
+#     data_save[0] = np.append(idx_all)
+#     data_save[1] = np.append(mu_test)
+#     data_save[2] = np.append(var_test)
+#
+#
+#
+#
+#
 
 
 
