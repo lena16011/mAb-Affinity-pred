@@ -54,3 +54,12 @@ GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nMatern ker
               R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig = False, out_file=None)
 
 
+### Plot the distribution of predicted values
+fig, axs = plt.subplots(1, 2, tight_layout=True)
+
+axs[0].hist(mus, bins = 30)
+axs[1].hist(y_train, bins = 30)
+axs[0].title.set_text('Distribution of predictions')
+axs[1].title.set_text('Distribution of true KDs')
+
+plt.show()

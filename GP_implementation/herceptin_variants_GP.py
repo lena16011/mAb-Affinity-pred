@@ -75,7 +75,15 @@ GP.correlation_plot(y_true, mus, cor_line=False, save_fig=False)
 GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nLD kernel ',
                  R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=False) #, out_file=str(dir_outLD+'LD_corr_variance_CV.png'))
 
+### Plot the distribution of predicted values
+fig, axs = plt.subplots(1, 2, tight_layout=True)
 
+axs[0].hist(mus, bins = 30)
+axs[1].hist(y_train, bins = 30)
+axs[0].title.set_text('Distribution of predictions')
+axs[1].title.set_text('Distribution of true KDs')
+
+plt.show()
 
 ################################### NECESSARY ??? #########################################
 #### TEST TEST SET ####
@@ -129,7 +137,6 @@ GP.corr_var_plot_highlighted(y_train, mu_train, var_train,  y_test, mu_test, var
 
 
 
-
 ####### MATERN KERNEL #########
 
 
@@ -156,7 +163,15 @@ GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCMatern ke
 ### hyperparameter just changes minor
 
 
+### Plot the distribution of predicted values
+fig, axs = plt.subplots(1, 2, tight_layout=True)
 
+axs[0].hist(mus, bins = 30)
+axs[1].hist(y_train, bins = 30)
+axs[0].title.set_text('Distribution of predictions')
+axs[1].title.set_text('Distribution of true KDs')
+
+plt.show()
 
 
 

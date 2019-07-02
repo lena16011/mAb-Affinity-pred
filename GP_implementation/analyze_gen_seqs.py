@@ -26,7 +26,10 @@ def calculate_norm_dist_matrix(seq_lst):
         # Calculate the distances as rows of the distance matrix
         row = seqs.iloc[:].apply(stringdist.levenshtein_norm, args=(seqs.loc[i],))
         D.loc[i] = row.T
-        print(i)
+        if i % 10 == 0:
+            print(i)
+
+
     return D.values
 
 # calculate a distance matrix
@@ -45,7 +48,9 @@ def calculate_LD_dist_matrix(seq_lst):
         # Calculate the distances as rows of the distance matrix
         row = seqs.iloc[:].apply(stringdist.levenshtein, args=(seqs.loc[i],))
         D.loc[i] = row.T
-        print(i)
+        if i % 10 == 0:
+            print(i)
+
     return D.values
 
 # prepare the sequence list for the network plots; create 3-tuples; just from another script
@@ -113,33 +118,41 @@ def ebunch_norm(seqs_lst, dist_matrix, LD = None):
 
 ## Set input directories
 
-in_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/pos/'
-in_file = in_dir + 'new_seq_gen_pos.csv'
+in_dir = ['/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/10_8/pos/',
+          '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/10_8/neg/',
+         '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/midr/']
+
+files = ['all_new_seq_gen_pos.csv', 'all_new_seq_gen_neg.csv', 'all_new_seq_gen_mid.csv']
+
+
+
+
+
+
+# chose which file
+i = 2
+in_file = in_dir[i] + files[i]
+
 
 ## load data from generated/predicted sequences
 
 data = pd.read_csv(in_file, index_col=0)
-data.sort_values(by='mus', inplace = True, ascending=False)
-
-# save top 1000 sequences
-data_save = data.iloc[:1000, ]
-data_save.to_csv(in_dir + 'top_1000_pos.csv')
 
 ### Calculate distance matrices
 
 # get the first sequences as list (with lowest KD)
-seq_lst = list(data.Sequences[:1000])
+seq_lst = list(data.Sequences)
 
 
 # calculate norm distance matrix
 dist_norm = calculate_norm_dist_matrix(seq_lst)
 
 # save normal. distance matrix and save
-np.savetxt(in_dir+'dist_matrix_1000_hiKDs.csv', dist_norm, delimiter = ',')
+np.savetxt(in_dir[i]+'norm_dist_matrix_1000.csv', dist_norm, delimiter = ',')
 
 # calculate LD distance matrix and save
 dist_LD = calculate_LD_dist_matrix(seq_lst)
-np.savetxt(in_dir+'LDdist_matrix_1000_hiKDs.csv', dist_norm, delimiter = ',')
+np.savetxt(in_dir[i]+'LDdist_matrix_.csv', dist_norm, delimiter = ',')
 
 
 # create ebunches to calculate statistics
@@ -155,6 +168,7 @@ max_sim = max([1-eb_norm[x][2] for x in range(len(eb_norm))])
 
 
 # print the stats
+print("file: {}".format(files[index]))
 print("# selected VDJs",'\t',len(dist_LD))
 print("length of VDJs",'\t',np.unique([len(x) for x in seq_lst]))
 
@@ -166,8 +180,23 @@ print("mean Similarity",'\t', str(round(mean_sim, 3)))
 print("min Similarity",'\t',str(round(min_sim, 3)))
 print("max Similarity",'\t',str(round(max_sim, 3)))
 
-# print a sequence list
-[print(x) for x in seq_lst]
+
+
+
+
+
+
+
+########## Get specifically the first 10 seqs
+
+#get top 10 seqs and save
+# seqs_neg = pd.read_csv(in_dir[1] + files[1], index_col=0, nrows= 10)
+# seqs_mid = pd.read_csv(in_dir[2] + files[2], index_col=0, nrows= 10)
+# seqs_pos = pd.read_csv(in_dir[0] + files[0], index_col=0, nrows= 10)
+#
+# seqs_neg.to_csv(in_dir[1] + 'top10_neg_seqs.csv')
+# seqs_mid.to_csv(in_dir[2] + 'top10_mid_seqs.csv')
+# seqs_pos.to_csv(in_dir[0] + 'top10_pos_seqs.csv')
 
 
 
@@ -176,8 +205,45 @@ print("max Similarity",'\t',str(round(max_sim, 3)))
 
 
 
+########### get sequence with lowest LD to consenus sequence
+
+cons_seq = 'QVQLQQSGAELVRPGASVTLSCKASGYTFTDYEMHWVKQTPVHGLEWIGAIDPETGGTAYNQKFKGKATLTADKSSSTAYMELRSLTSEDSAVYYCTRDYYGSNYLAWFAYWGQGTLVTVSA'
+
+# load data from 1000 seq file
 
 
+seqs_neg = pd.read_csv(in_dir[1] + files[1], index_col=0)
+seqs_mid = pd.read_csv(in_dir[2] + files[2], index_col=0)
+seqs_pos = pd.read_csv(in_dir[0] + files[0], index_col=0)
+
+
+seqs_neg['LD_cons'] = seqs_neg['Sequences'].iloc[:].apply(stringdist.levenshtein, args=(cons_seq,))
+seqs_mid['LD_cons'] = seqs_mid['Sequences'].iloc[:].apply(stringdist.levenshtein, args=(cons_seq,))
+seqs_pos['LD_cons'] = seqs_pos['Sequences'].iloc[:].apply(stringdist.levenshtein, args=(cons_seq,))
+
+# print indeces of smallest LD to consensus sequence
+
+print("# sequence (neg) {} with lowest LD ({}) to consensus sequence".format(seqs_neg.LD_cons.values.argmin(),
+                                                                          seqs_neg.LD_cons.values.min()))
+
+print("# sequence (pos) {} with lowest LD ({}) to consensus sequence".format(seqs_pos.LD_cons.values.argmin(),
+                                                                          seqs_pos.LD_cons.values.min()))
+
+print("# sequence (mid) {} with lowest LD ({}) to consensus sequence".format(seqs_mid.LD_cons.values.argmin(),
+                                                                          seqs_mid.LD_cons.values.min()))
+
+
+
+
+lo_LD_neg = seqs_neg[seqs_neg.LD_cons.values == seqs_neg.LD_cons.values.min()]
+lo_LD_neg.to_csv(in_dir[1]+'loLD_seq_neg.csv')
+
+lo_LD_pos = seqs_pos[seqs_pos.LD_cons.values == seqs_pos.LD_cons.values.min()]
+lo_LD_pos.to_csv(in_dir[0]+'loLD_seq_pos.csv')
+
+lo_LD_mid = seqs_mid[seqs_mid.LD_cons.values == seqs_mid.LD_cons.values.min()]
+
+lo_LD_mid.to_csv(in_dir[2]+'loLD_seq_mid.csv')
 
 
 
