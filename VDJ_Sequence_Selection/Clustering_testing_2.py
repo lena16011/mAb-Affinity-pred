@@ -33,7 +33,7 @@ try_dist = pd.read_csv(str(file+'uniqCDR3_DistMatrix.txt'), nrows= 1001, index_c
 # try_dist.index = idx
 # try_dist.columns = idx
 
-# make symmetric matrix
+# make a symmetric matrix
 try_dist = try_dist.fillna(value='0').as_matrix()
 try_dist = np.tril(try_dist) + np.tril(try_dist).T
 

@@ -1,13 +1,12 @@
 '''
- to see how the similartiy filtering and the Clustering performed, and how much
- 'overlap" we can see between the two methods, we want to compare the similarity
- filtering (80%, about 300 sequences) and the clustering with the length
- filtered files average linkage (cluster number: 60, 179 sequences) and complete linkage (cluster number: 20,
- 199 sequences);
-
-
- EDIT: same is done with the affinity propagation clustering;
- Then we can visualize the overlap analysis in a Venn diagramm;
+ Script that further processes visualizes the clustering data (only the clustering of the
+ length filtered CDR3s) in order to look at the peformance of the similartiy filtering and
+ clustering and how many sequences are selected by both of the two methods (referred to as
+ overlapping sequences). The sequences detected by similarity filtering (80%, about
+ 300 sequences) and the clustering with the length-filtered files:
+  - average linkage (cluster number: 60, 179 sequences)
+  - complete linkage (cluster number: 20, 199 sequences)
+  - affinity propagation clustering (default parameters)
 '''
 
 
@@ -16,12 +15,15 @@ import matplotlib_venn as venn
 from matplotlib import pyplot as plt
 
 ################## SET INPUT PATHS
+
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
+
 # set the input path to the folder that contains the clustering folders (complete_20_filt/ and
 # average_60_filt
-input_labels_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Summary/'
+input_labels_dir = abs_path + '/data/Clustering/Summary/'
 
 # set the input path to the folder that contains the clustering labels of the affinity propagation clustering
-input_AP = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Affinity_propagation/'
+input_AP = abs_path + '/data/Clustering/AP_Clustering/'
 
 # set the input path of the data of the original unique CDR3 sequences
 input_CDR3_uniq = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Filtered_files/data_uniq_length_CDR3.txt'
