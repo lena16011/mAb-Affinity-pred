@@ -232,8 +232,8 @@ overlap_AP_sim80.to_csv(abs_path + '/data/Clustering/Summary/overlap_AP_clusteri
                          sep='\t', index=False)
 
 
-#################### Visualization in a Venn plot
 
+################# Visualization in a Venn plot
 # define the sets (in our case the sequences)
 set_av60 = set(data_average_60['CDR3_AA'])
 set_com20 = set(data_complete_20['CDR3_AA'])
