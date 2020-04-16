@@ -26,13 +26,13 @@ input_labels_dir = abs_path + '/data/Clustering/Summary/'
 input_AP = abs_path + '/data/Clustering/AP_Clustering/'
 
 # set the input path of the data of the original unique CDR3 sequences
-input_CDR3_uniq = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Filtered_files/data_uniq_length_CDR3.txt'
+input_CDR3_uniq = abs_path + '/data/Filtered_files/data_uniq_length_CDR3.txt'
 
 # set input path for the filtered CDR3 (80% similarity)
-input_filt_CDR3_80 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Filtered_files/similarity80_FilesAA/simfilt80_data_all.txt'
+input_filt_CDR3_80 = abs_path + '/data/Filtered_files/similarity80_FilesAA/simfilt80_data_all.txt'
 
 # set input path for the filtered CDR3 (70% similarity)
-input_filt_CDR3_70 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Filtered_files/similarity70_FilesAA/simfilt70_data_all.txt'
+input_filt_CDR3_70 = abs_path + '/data/Filtered_files/similarity70_FilesAA/simfilt70_data_all.txt'
 
 
 
@@ -40,16 +40,16 @@ input_filt_CDR3_70 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Filtered_fi
 ############# SET OUTPUT PATHS
 # set boolean to save file of the sequences that appear in the target cluster (complete20, average60)
 save_bool1 = False
-output_dir1 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Summary/'
+output_dir1 = abs_path+'/data/Clustering/Summary/'
 
 # set boolean to save file of the overlapping sequences that appear in the target cluster
 # (complete20, average60 and Affinity propagation) and similarity filtering
 save_bool2 = False
-output_dir2 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Summary/'
+output_dir2 = abs_path+'/data/Clustering/Summary/'
 
 # set boolean to save venn plots
 save_bool_plots = False
-output_plots = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/CDR3_Selection/'
+output_plots = abs_path+'/data/Plots/CDR3_Selection/'
 
 
 
@@ -61,10 +61,10 @@ output_plots = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/CDR3_Select
 
 
 # Load the data of the cluster labels
-labels_complete_20 = pd.read_csv(str(input_labels_dir + 'complete_20_filt/complete_labels_20.txt')
-                                 , index_col=0, sep='\t', low_memory=True)
-labels_average_60 = pd.read_csv(str(input_labels_dir + 'average_60_filt/average_labels_60.txt')
-                                , index_col=0, sep='\t', low_memory=True)
+labels_complete_20 = pd.read_csv(input_labels_dir + 'complete_20_filt/complete_20_target_cluster.txt',
+                                 index_col=0, sep='\t', low_memory=True)
+labels_average_60 = pd.read_csv(input_labels_dir + 'average_60_filt/average_60_target_cluster.txt',
+                                index_col=0, sep='\t', low_memory=True)
 
 # Load the file with all unique CDR3 sequences
 data_uniq_length = pd.read_csv(input_CDR3_uniq, index_col=0, sep='\t', low_memory=True)
@@ -82,8 +82,9 @@ if save_bool1 == True:
 
 
 # count the overlapping data between complete and average linkage;
-print(len(data_complete_20))
-print(len(data_average_60))
+print("# sequences in the cluster with the binder sequence:\n")
+print("complete linkage, 20 clusters: " + str(len(data_complete_20)))
+print("average linkage, 60 clusters: " + str(len(data_average_60)))
 print(len(data_complete_20.loc[data_complete_20['CDR3_AA'].isin(data_average_60.CDR3_AA)]))
 #142 sequences (of 199/179 are overlapping)
 
@@ -94,10 +95,10 @@ filt80_data_all = pd.read_csv(input_filt_CDR3_80, sep='\t')
 
 # print the number of sequences that are in the datasets left
 print('# of unique CDR3 sequences found by:')
-print('simfilt 80% only:', len(filt80_data_all))
-print('simfilt 80% and complete20 clustering linkage:', len(data_complete_20.loc[data_complete_20['CDR3_AA'].isin(filt80_data_all.CDR3_AA)]))
-print('simfilt 80% and average60 clustering linkage:',len(data_average_60.loc[data_average_60['CDR3_AA'].isin(filt80_data_all.CDR3_AA)]))
-# they both share only 26 sequences in common
+print('simfilt 80%:', len(filt80_data_all))
+print('simfilt 80% and complete20 clustering linkage (overlap):', len(data_complete_20.loc[data_complete_20['CDR3_AA'].isin(filt80_data_all.CDR3_AA)]))
+print('simfilt 80% and average60 clustering linkage (overlap):',len(data_average_60.loc[data_average_60['CDR3_AA'].isin(filt80_data_all.CDR3_AA)]))
+# 26 sequences found overlapping
 
 
 
@@ -106,6 +107,9 @@ bools = []
 for seq in filt80_data_all.CDR3_AA:
     if len(seq) == 17:
         bools.append('TRUE')
+        print(len(seq))
+    else:
+        print(len(seq))
 print(len(bools))
 # 26 sequences have the same length as the target sequence
 
@@ -116,7 +120,7 @@ filt70_data_all = pd.read_csv(input_filt_CDR3_70, sep='\t')
 
 # print the number of sequences that are in the datasets left
 print('# of unique CDR3 sequences found by:')
-print('simfilt 70% only:', len(filt70_data_all))
+print('simfilt 70%:', len(filt70_data_all))
 print('simfilt 70% and complete20 clustering linkage:', len(data_complete_20.loc[data_complete_20['CDR3_AA'].isin(filt70_data_all.CDR3_AA)]))
 print('simfilt 70% and average60 clustering linkage:',len(data_average_60.loc[data_average_60['CDR3_AA'].isin(filt70_data_all.CDR3_AA)]))
 # they both share only 37/39 sequences in common
@@ -127,6 +131,7 @@ for seq in filt70_data_all.CDR3_AA:
     if len(seq) == 17:
         bools.append('TRUE')
 print(len(bools))
+# 40 sequences of same length
 
 print(len(filt80_data_all.loc[filt80_data_all['CDR3_AA'].isin(filt70_data_all.CDR3_AA)]))
 # just for the validation; all the sequences of 80% sim. filtering appear (as they should) also in the 70% sim. filtering
@@ -140,7 +145,7 @@ overlap_com_sim80 = data_complete_20.loc[data_complete_20['CDR3_AA'].isin(filt80
 overlap_com_av_sim80 = overlap_com_sim80.loc[overlap_com_sim80['CDR3_AA'].isin(data_average_60.CDR3_AA)]
 
 if save_bool2 == True:
-    overlap_com_av_sim80.to_csv(str(output_dir2 + 'overlap_filt_clustering_simfilt80.txt'),
+    overlap_com_av_sim80.to_csv(output_dir2 + 'overlap_filt_clustering_simfilt80.txt',
                                 sep='\t', index=False)
 # 26 sequences occur in all
 
@@ -148,7 +153,7 @@ if save_bool2 == True:
 overlap_com_av = data_average_60.loc[data_average_60['CDR3_AA'].isin(data_complete_20.CDR3_AA)]
 
 if save_bool2 == True:
-    overlap_com_av.to_csv(str(output_dir2 + 'overlap_clustering_av_com.txt'),
+    overlap_com_av.to_csv(output_dir2 + 'overlap_clustering_av_com.txt',
                                 sep='\t', index=False)
 # 142 sequences occur in all
 
@@ -158,29 +163,13 @@ overlap_com_sim70 = data_complete_20.loc[data_complete_20['CDR3_AA'].isin(filt70
 overlap_com_av_sim70 = overlap_com_sim70.loc[overlap_com_sim70['CDR3_AA'].isin(data_average_60.CDR3_AA)]
 
 if save_bool2 == True:
-    overlap_com_av_sim70.to_csv(str(output_dir2 + 'overlap_clustering_simfilt70.txt') ,sep='\t', index=False)
+    overlap_com_av_sim70.to_csv(output_dir2 + 'overlap_clustering_simfilt70.txt' ,sep='\t', index=False)
 # here we have 36 sequences
 
 
 
 
-
-
-
-#######################################CHECK IF THE SEQUENCES HAVE SAME LENGTH OR NOT!!!!!
-########################################### how does the isin function searches for????
-
-# print the number of sequences that have different length compared to the target sequence; just for interst;
-bools = []
-for seq in filt70_data_all.CDR3_AA:
-    if len(seq) == 17:
-        bools.append('TRUE')
-print(len(bools))
-# 40 sequences have the same length like the target sequence;
-
-
-
-################################### Visualization in a Venn plot
+########### Visualization in a Venn plot
 
 # define the sets (in our case the sequences)
 set_av60 = set(data_average_60['CDR3_AA'])
@@ -210,12 +199,9 @@ fig.show()
 
 
 
-
-##################CHECK furhter here!!!!!!!!!!!!
-
-################################ AFFINITY PROPAGATION CLUSTERING VS. SIMILARITY FILTERING
+################### AFFINITY PROPAGATION CLUSTERING VS. SIMILARITY FILTERING
 # Load the data of the cluster labels
-labels_AP = pd.read_csv(str(input_AP + 'target_clust_data_AP.txt'), index_col=0, sep='\t',
+labels_AP = pd.read_csv(input_AP + 'target_clust_data_AP.txt', index_col=0, sep='\t',
                         low_memory=True)
 
 
@@ -230,31 +216,20 @@ if save_bool2 == True:
 # count the sequences found in AP
 print(len(data_AP))
 
-####???#####
-# 549 sequences in the clustering found;
+# 32 sequences in the clustering found;
 
 print(len(data_AP.loc[data_AP['CDR3_AA'].isin(filt70_data_all.CDR3_AA)]))
 print(len(data_AP.loc[data_AP['CDR3_AA'].isin(filt80_data_all.CDR3_AA)]))
-
-####  ??????  #######
-# they have very little overlapping sequences! only 15 (70%) and 11 (80%)
+# 31 26
 
 overlap_AP_sim70 = data_AP.loc[data_AP['CDR3_AA'].isin(filt70_data_all.CDR3_AA)]
 overlap_AP_sim80 = data_AP.loc[data_AP['CDR3_AA'].isin(filt80_data_all.CDR3_AA)]
 
 # save overlapping files
-overlap_AP_sim70.to_csv(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Summary/overlap_AP_clustering_simfilt70.txt'),
+overlap_AP_sim70.to_csv(abs_path + '/data/Clustering/Summary/overlap_AP_clustering_simfilt70.txt'),
                          sep='\t', index=False)
-overlap_AP_sim80.to_csv(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Clustering/Summary/overlap_AP_clustering_simfilt80.txt'),
+overlap_AP_sim80.to_csv(abs_path + '/data/Clustering/Summary/overlap_AP_clustering_simfilt80.txt'),
                          sep='\t', index=False)
-
-
-
-
-
-
-
-
 
 
 #################### Visualization in a Venn plot
@@ -287,7 +262,7 @@ for text in v2.set_labels:
     text.set_fontsize(7)
 
 fig.suptitle("Venn diagram of the clustering and the similarity filtering", fontsize=16)
-# fig.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Venn_similarity_clustering_AP_comparison.pdf')
+fig.savefig(abs_path + '/data/Plots/CDR3_Selection/Venn_similarity_clustering_AP_comparison.pdf')
 fig.show()
 
 
@@ -312,7 +287,7 @@ for text in v2.set_labels:
     text.set_fontsize(7)
 
 fig.suptitle('Venn diagram of the clustering and the similarity filtering', fontsize=16)
-# fig.savefig('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Venn_similarity_clustering_AP_comparison2.pdf')
+fig.savefig(abs_path + '/data/Plots/CDR3_Selection/Venn_similarity_clustering_AP_comparison2.pdf')
 fig.show()
 
 
