@@ -11,15 +11,16 @@ def load_labels(file_prefix, file_path_labels, file_data, cluster_range, n_seque
     Function to load the clustering output into a proper summarization file format;
 
     :param file_prefix: the prefix of the files to be loaded in the file path
-    :param file_path: the path that contains the files with the indices of the sequences and the corr.
+    :param file_path_lables: the path that contains the files with the indices of the sequences and the corresponding
     cluster label
+    :param file_data: is the file with the sequence information of all the CDR3 sequences
     :param cluster_range: range of cluster numbers that used in the clustering script
-    :param n_sequences: number of sequences that were clustered
+    :param n_sequences: number of sequences that were clustered; that are in the file_data (just to initialize dataframe)
     :return: dataframe that contains the following columns: ['ReadID'], ['Dataset'], ['Boost'],
     ClusterNr_[cluster range], ['CDR3']
     '''
     # set the data names to load
-    file_names = [str(file_prefix) + str(i) for i in cluster_range]
+    file_names = [file_prefix + str(i) for i in cluster_range]
 
     # define the column names for the summarization data frame
     cols = ['ReadID'] + ['Dataset'] + ['Boost'] + ['ClusterNr_' + str(i) for i in cluster_range] + ['CDR3_AA']
@@ -99,7 +100,7 @@ abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
 
 # set file path for the data of the average linkage (CDR3 length filtered Clustering)
 file_path_filt = abs_path+'/data/Clustering/hierarchical_clustering_filt/Cluster_labels/'
-# set the filepath to the original file of the data of all the length-filtered CDR3 sequences
+# set the filepath to the original file of the sequence information of all the length-filtered CDR3 sequences
 file_data_filt = abs_path+'/data/Filtered_files/data_uniq_length_CDR3.txt'
 # save the summary clustering file
 save_bool_filt = True
@@ -123,93 +124,63 @@ file_path_AP = abs_path+'/data/Clustering/AP_clustering/Cluster_labels/'
 
 
 
-# ####### NON FILTERED DATA ---> did not work very well!
-#
-# #  (1) Load the clustering labels (average linkage) in a dataframe
-# label_data_names = ['labels_cluster_average' + str(i) for i in range(50, 1000, 50)]
-# cols = ['ReadID']+['Dataset']+['Boost']+['ClusterNr_'+str(i) for i in range(50, 1000, 50)]+['CDR3_AA']
-# labels_all_average = pd.DataFrame(index=range(27077), columns=cols, dtype=np.int32)
-#
-# data = pd.DataFrame()
-# i=3
-# for file in label_data_names:
-#     data = pd.read_csv(str(file_path_filt + file + '.txt'), index_col=0, sep='\t', low_memory=True,
-#                        dtype=np.int32)
-#     labels_all_average[labels_all_average.columns[i]] = data
-#     i=i+1
-#
-# # in labels we have a dataframe with all the Sequence indices and the according clusters
-# # we now want to add a column as the ReadIDs, Dataset and boost
-# # therefore we read the columns of the file, where all the unique sequences are
-#
-# file_path2 = './data/Clustering/'
-# labels_all_average['ReadID'] = pd.read_csv(str(file_path2+'data_uniqCDR3.txt'), sep = '\t', usecols=['ReadID'])
-# labels_all_average['Dataset'] = pd.read_csv(str(file_path2+'data_uniqCDR3.txt'), sep = '\t', usecols=['Dataset'])
-# labels_all_average['Boost'] = pd.read_csv(str(file_path2+'data_uniqCDR3.txt'), sep = '\t', usecols=['Boost'])
-# labels_all_average['CDR3_AA'] = pd.read_csv(str(file_path2+'data_uniqCDR3.txt'), sep = '\t', usecols=['CDR3_AA'])
-# # save the file with the clusterlabels
-# labels_all_average.to_csv(str(file_path+'labels_summary_all_average.txt'), sep = '\t')
-#
-# # Filter for the sequences in the cluster of the target sequence
-# tar_cluster_names_all_av = ['tar_cluster_all_average_'+str(i) for i in range(50, 1000, 50)]
-#
-# j = range(50, 1000, 50)
-# for i in range(len(tar_cluster_names_all_av)):
-#     locals()[tar_cluster_names_all_av[i]] = pd.DataFrame(columns=cols)
-#     tar_cluster = labels_all_average[labels_all_average[str('ClusterNr_'+str(j[i]))] == labels_all_average.iloc[17358, i+3]]
-#     locals()[tar_cluster_names_all_av[i]] = tar_cluster
-# # print number of sequences in the target cluster
-# print('Nr. of sequences in target cluster, all CDR3s average linkage (from 50-950 clusters):')
-# for i in range(len(tar_cluster_names_all_av)):
-#     print(len(locals()[tar_cluster_names_all_av[i]]))
-#
-# # save certain data of interest;
-# tar_cluster_all_average_550.to_csv(str(file_path2 + '/Summary/average_550_nonfilt/average_labels_550.txt'), sep = '\t')
-#
-#
-#
-#
-# # (2) Load the clustering labels (complete linkage) in a dataframe
-# label_data_all = ['labels_cluster_complete' + str(i) for i in range(50, 1000, 50)]
-# cols = ['ReadID']+['Dataset']+['Boost']+['ClusterNr_'+str(i) for i in range(50, 1000, 50)]+['CDR3_AA']
-# labels_all_complete = pd.DataFrame(index=range(27077), columns=cols, dtype=np.int32)
-# file_path = './data/Clustering/Clustering_dist_matrix/'
-# data = pd.DataFrame()
-# i=3
-# for file in label_data_all:
-#     data = pd.read_csv(str(file_path + 'Cluster_labels_2/' + file + '.txt'), index_col=0, sep='\t', low_memory=True,
-#                        dtype=np.int32)
-#     labels_all_complete[labels_all_complete.columns[i]] = data
-#     i=i+1
-#
-# # in labels we have a dataframe with all the Sequence indices and the according clusters
-# # we now want to add a column as the ReadIDs, Dataset and boost
-# # therefore we read the columns of the file, where all the unique/united sequences are
-#
-# file_path2 = './data/Clustering/'
-# labels_all_complete['ReadID'] = pd.read_csv(str(file_path2+'data_uniq_length_CDR3.txt'), sep = '\t', usecols=['ReadID'])
-# labels_all_complete['Dataset'] = pd.read_csv(str(file_path2+'data_uniq_length_CDR3.txt'), sep = '\t', usecols=['Dataset'])
-# labels_all_complete['Boost'] = pd.read_csv(str(file_path2+'data_uniq_length_CDR3.txt'), sep = '\t', usecols=['Boost'])
-# labels_all_complete['CDR3_AA'] = pd.read_csv(str(file_path2+'data_uniq_length_CDR3.txt'), sep = '\t', usecols=['CDR3_AA'])
-# # save the file with the clusterlabels
-# labels_all_complete.to_csv(str(file_path+'labels_summary_all_complete.txt'), sep = '\t')
-#
-# tar_cluster_names_all_com = ['tar_cluster_all_complete_'+str(i) for i in range(50, 1000, 50)]
-#
-# j = range(50, 1000, 50)
-# for i in range(len(tar_cluster_names_all_com)):
-#     locals()[tar_cluster_names_all_com[i]] = pd.DataFrame(columns=cols)
-#     tar_cluster = labels_all_complete[labels_all_complete[str('ClusterNr_'+str(j[i]))] == labels_all_complete.iloc[17358, i+3]]
-#     locals()[tar_cluster_names_all_com[i]] = tar_cluster
-# # print number of sequences in the target cluster
-# print('Nr. of sequences in target cluster, all CDR3s complete linkage (from 50-950 clusters):')
-# for i in range(len(tar_cluster_names_all_com)):
-#     print(len(locals()[tar_cluster_names_all_com[i]]))
-#
-# # save certain data of interest;
-# tar_cluster_all_complete_100.to_csv(str(file_path2 + 'Summary/complete_100_nonfilt/complete_labels_100.txt'), sep = '\t')
-#
-#
+
+
+
+### Load the clustering labels (average linkage) in a dataframe
+
+labels_all_average = load_labels('labels_cluster_average', abs_path + "/data/Clustering/hierarchical_Clustering/Cluster_labels/",
+                                 abs_path + "/data/Filtered_files/data_uniq_length_CDR3.txt",
+                                 range(50, 1000, 50), 27077)
+if save_bool_filt == True:
+    labels_all_average.to_csv(abs_path + "/data/Clustering/hierarchical_Clustering/labels_summary_all_average.txt", sep = '\t')
+
+# create dictionary with all cluster numbers and the data with the sequences that occur in the target cluster with
+# the binder sequence
+dict_tar_average = dict_target_cluster_seq_nr('average', labels_all_average, range(50, 1000, 50), 17358,
+                           abs_path + "/data/Clustering/hierarchical_Clustering/Nr_seq_av.txt",
+                           print_out = True, write_summary = True)
+
+### NOTE ###
+# average linkage with 550 cluster centers was chosen for further analysis as the
+# target cluster had ca. 200 (183) sequences; see nr_seq_av.txt file
+###########
+
+# save data of the cluster of interest (cluster that contains the binder sequence) in the clustering summary folder
+# create output path if it doesn't exist
+if not os.path.exists(output_path_summary+'average_550_nonfilt/'):
+    os.makedirs(output_path_summary+'average_550_nonfilt/')
+
+dict_tar_average["tar_cluster_average_550"].to_csv(output_path_summary + 'average_550_nonfilt/average_550_target_cluster.txt', sep = '\t')
+
+
+
+# (2) Load the clustering labels (complete linkage) in a dataframe
+
+labels_all_complete = load_labels('labels_cluster_complete', abs_path + "/data/Clustering/hierarchical_Clustering/Cluster_labels/",
+                                 abs_path + "/data/Filtered_files/data_uniq_length_CDR3.txt",
+                                 range(50, 1000, 50), 27077)
+if save_bool_filt == True:
+    labels_all_complete.to_csv(abs_path + "/data/Clustering/hierarchical_Clustering/labels_summary_all_complete.txt", sep = '\t')
+
+# create dictionary with all cluster numbers and the data with the sequences that occur in the target cluster with
+# the binder sequence
+dict_tar_average = dict_target_cluster_seq_nr('complete', labels_all_complete, range(50, 1000, 50), 17358,
+                           abs_path + "/data/Clustering/hierarchical_Clustering/Nr_seq_compl.txt",
+                           print_out = True, write_summary = True)
+
+### NOTE ###
+# average linkage with 100 cluster centers was chosen for further analysis as the
+# target cluster had ca. 200 (176) sequences; see nr_seq_compl.txt file
+###########
+
+# save data of the cluster of interest (cluster that contains the binder sequence) in the clustering summary folder
+# create output path if it doesn't exist
+if not os.path.exists(output_path_summary+'complete_100_nonfilt/'):
+    os.makedirs(output_path_summary+'complete_100_nonfilt/')
+
+dict_tar_average["tar_cluster_complete_100"].to_csv(output_path_summary + 'complete_100_nonfilt/complete_100_target_cluster.txt', sep = '\t')
+
 
 
 
@@ -227,7 +198,7 @@ if save_bool_filt == True:
 # create dictionary with all cluster numbers and the data with the sequences that occur in the target cluster with
 # the binder sequence
 dict_tar_un_average = dict_target_cluster_seq_nr('average', label_data_average, range(20, 300, 20), 1069,
-                                                 str(output_path_filt + 'Nr_seq_av_filt.txt'), print_out = True, write_summary=False)
+                                                 output_path_filt + 'Nr_seq_av_filt.txt', print_out = True, write_summary=False)
 
 
 ### NOTE ###
