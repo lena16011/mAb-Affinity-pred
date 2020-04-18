@@ -1,5 +1,7 @@
 '''
- Script that further processes visualizes the clustering data (only the clustering of the
+PART 1:
+
+ Script that further processes and visualizes the clustering data (only the clustering of the
  length filtered CDR3s) in order to look at the peformance of the similartiy filtering and
  clustering and how many sequences are selected by both of the two methods (referred to as
  overlapping sequences). The sequences detected by similarity filtering (80%, about
@@ -7,6 +9,18 @@
   - average linkage (cluster number: 60, 179 sequences)
   - complete linkage (cluster number: 20, 199 sequences)
   - affinity propagation clustering (default parameters)
+
+PART 2:
+
+Script to extract additional information from CDR3 tables for the selected sequences, that we might need afterwards;
+# cols with column number (starting at 0 as CDR3) that we filter for:
+# - CDR3            : 0
+# - MAF Clonal %    : 1
+# - SHM(tot)_CB     : 6
+# - SHM(ns)_CB      : 8
+# - Majority_V_Gene : 11
+# - Majority_J_Gene : 12
+# - Majority_Isotype: 13
 '''
 
 
@@ -293,3 +307,61 @@ fig.show()
 
 
 
+################# PART 2 ###################
+# extract more information of the final CDR3 Selection from the Annotation tables
+############################################
+
+# Load in the target CDR3 sequences of which we want to get the information from the Annotation tables
+# file_path_tables leads to the Annotation tables and file_path_target leads to my target sequences,
+# for which I want to filter
+
+file_path_tables = abs_path + '/data/Annotation_tables/'
+file_path_target = abs_path + '/data/Clustering/Summary/'
+
+# specify which columns to extract
+cols = ['CDR3', 'MAF_Clonal_%', 'SHM(tot)_CB', 'SHM(ns)_CB', 'Majority_V_Gene', 'Majority_J_Gene',
+        'Majority_Isotype']
+# specify output path and file name
+out_path = abs_path + '/data/Clustering/Summary/CDR3_table_info.txt'
+
+
+
+# read in the columns of the 1st line from the CDR3 tables
+with open(file_path_tables + 'HEL_1_boost_BM_A_CDR3_Table.txt', 'r') as file:
+    lines = file.readlines()
+    cols_orig = lines[0].strip().split('\t')
+
+# Load in the data to filter for; here we are now filtering the overlap_filt_clustering_simfilt70.txt
+target_file_name = 'overlap_filt_clustering_simfilt70.txt'
+target_file = pd.read_csv(str(file_path_target + target_file_name), sep = '\t')
+target_CDR3_AA = target_file.CDR3_AA.tolist()
+
+# specifying the CDR3 tables to read in
+boosts = ['no', '1', '2', '3']
+d_sets = ['A', 'B', 'C']
+file_names = []
+for b in boosts:
+    for d in d_sets:
+        file_names.append(str('HEL_' + str(b) + '_boost_BM_' + str(d) + '_CDR3_Table.txt'))
+
+# reading the CDR3 tables line by line, and extract infos of the target sequences
+info_all = pd.DataFrame()
+df_parts = pd.DataFrame()
+for f_name in file_names:
+    with open(str(file_path_tables + f_name), 'r') as table_file:
+        for line in table_file.readlines():
+            parts = line.strip().split('\t')
+            if parts[0] in target_CDR3_AA:
+                for n, i in enumerate(parts):
+                    if i == '':
+                        parts[n] = 'NaN'
+                df_parts = df_parts.append(pd.DataFrame(parts).T)
+
+# extract only the columns we want
+n_cols = [0,1,6,8,11,12,13]
+info_all = df_parts.iloc[:,n_cols]
+# reset the index
+info_all.reset_index(drop=True, inplace=True)
+
+# save the file as txt file
+info_all.to_csv(out_path, sep='\t', header = cols, index=False)
