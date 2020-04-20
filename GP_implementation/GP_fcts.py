@@ -300,7 +300,7 @@ def CDRdist_kernelPAM40(in_seq1, in_seq2 = False):
 
 
 
-######## GAUSSIAN PROCESS #######
+######## GAUSSIAN PROCESS LD #######
 
 def predict_GP(X_train, y_train , X_test, param):
     """ Gaussian process regression predictions.
@@ -365,7 +365,7 @@ def neg_log_marg_likelihood(log_pram, X, y):
 
     return log_p_y_X
 
-def get_params(X_train, y_train, init_param):
+def get_params(X_train, y_train, init_param = [0.1]):
     '''
     Optimize the neg. log likelihood to get the optimal hyperparameter
     :param X_train:
@@ -387,7 +387,7 @@ def get_params(X_train, y_train, init_param):
 
     return opt_param
 
-def cv_param_tuning(X, y, k, init_param):
+def cv_param_tuning(X, y, k, init_param = [0.1]):
     """
     Cross validation framework to find the optimal noise hyperparameter sigma^2 by
     minimizing the neg log likelihood.

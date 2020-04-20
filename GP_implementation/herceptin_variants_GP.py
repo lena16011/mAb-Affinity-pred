@@ -14,7 +14,7 @@ from GP_implementation import GP_fcts as GP
 
 ## SET INPUT DIRECTORIES ####
 input_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/herceptin/'
-input_f = input_dir + 'herceptin.csv'
+input_f = input_dir + 'DM_variant-KD.csv'
 
 
 ## SET OUTPUT DIRECTORIES (for plots to save)
@@ -35,6 +35,7 @@ for dir in dirs:
 # Load sequence data
 data = pd.read_csv(input_f, usecols=['Variant', 'Sequence', 'KD'])
 
+
 # Load KD values and add them together to a new dataframe (remove samples that w/o measured KD value)
 
 KDs_unnormalized = data['KD']
@@ -53,14 +54,14 @@ data['KD'] = GP.normalize_test_train_set(data['KD'])
 X_train = data['Sequence'].values
 y_train = data['KD'].values
 
-
+k = len(X_train)
 
 
 ######## LD KERNEL #########
 #### CROSS VALIDATION
 
 # test inner cv loop for hyperparameter tuning
-k = 30
+
 mus, vars, y_true, prams_test = GP.cv_param_tuning(X_train, y_train, k, init_param=1)
 
 # calculate and print scores
@@ -84,6 +85,118 @@ axs[0].title.set_text('Distribution of predictions')
 axs[1].title.set_text('Distribution of true KDs')
 
 plt.show()
+
+
+
+
+
+
+
+####### MATERN KERNEL #########
+
+
+# one-hot encode sequences
+X_trainOH = GP.one_hot_encode_matern(X_train)
+# X_testOH = GP.one_hot_encode_matern(X_test)
+
+
+#### CROSS VALIDATION
+# test inner cv loop for hyperparameter tuning
+
+mus, vars, y_true, prams = GP.cv_param_tuning_mat(X_trainOH, y_train, k, init_param=(1,50))
+
+# calculate and print scores
+r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
+
+# draw simple correlation plot
+GP.correlation_plot(y_true, mus, cor_line=False, save_fig=False) #, out_file =str(dir_outMa+'Ma_corr_CV_simple.png'))
+
+# draw correlation plot with standard deviation
+GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCMatern kernel ',
+              R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=False) #, out_file=str(dir_outMa+'Ma_corr_variance_CV.png'))
+
+### hyperparameter just changes minor
+
+
+### Plot the distribution of predicted values
+fig, axs = plt.subplots(1, 2, tight_layout=True)
+
+axs[0].hist(mus, bins = 30)
+axs[1].hist(y_train, bins = 30)
+axs[0].title.set_text('Distribution of predictions')
+axs[1].title.set_text('Distribution of true KDs')
+
+plt.show()
+
+
+
+#BLOSUM45
+
+## CROSS VALIDATION ####
+
+# test inner cv loop for hyperparameter tuning
+
+mus, vars, y_true, prams_test = GP.cv_param_tuning_CDRd45(X_train, y_train, k)
+
+# calculate and print scores
+r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
+
+# draw simple correlation plot
+GP.correlation_plot(y_true, mus, cor_line=False, save_fig=True, out_file =str(dir_outSubMa+'B45_corr_CV_simpleNew.png'))
+
+
+# draw correlation plot with standard deviation
+GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCDRdist BLOSUM45 ',
+                 R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=True, out_file=str(dir_outSubMa+'B45_corr_variance_CVNew.png'))
+
+
+
+#BLOSUM62
+
+## CROSS VALIDATION ####
+
+# test inner cv loop for hyperparameter tuning
+k = 25
+mus, vars, y_true, prams_test = GP.cv_param_tuning_CDRd62(X_train, y_train, k)
+
+# calculate and print scores
+r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
+
+# draw simple correlation plot
+GP.correlation_plot(y_true, mus, cor_line=False, save_fig=True, out_file =str(dir_outSubMa+'B62_corr_CV_simpleNew.png'))
+
+
+# draw correlation plot with standard deviation
+GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True,method = '\nCDRdist BLOSUM62 ',
+                 R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=True, out_file=str(dir_outSubMa+'B62_corr_variance_CVnew.png'))
+
+
+
+
+# PAM40
+
+## CROSS VALIDATION ####
+
+# test inner cv loop for hyperparameter tuning
+k = 25
+mus, vars, y_true, prams_test = GP.cv_param_tuning_CDRdPAM40(X_train, y_train, k)
+
+# calculate and print scores
+r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
+
+# draw simple correlation plot
+GP.correlation_plot(y_true, mus, cor_line=False, save_fig=True, out_file =str(dir_outSubMa+'P40_corr_CV_simpleNew.png'))
+
+
+# draw correlation plot with standard deviation
+GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCDRdist PAM40 ',
+                 R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=True, out_file=str(dir_outSubMa+'P40_corr_variance_CVNew.png'))
+
+
+
+
+
+
 
 ################################### NECESSARY ??? #########################################
 #### TEST TEST SET ####
@@ -131,118 +244,6 @@ GP.corr_var_plot_highlighted(y_train, mu_train, var_train,  y_test, mu_test, var
                  out_file=str(dir_out+'LD_corr_variance_highlighted.png'))
 
 ##############################################################################################################
-
-
-
-
-
-
-####### MATERN KERNEL #########
-
-
-# one-hot encode sequences
-X_trainOH = GP.one_hot_encode_matern(X_train)
-# X_testOH = GP.one_hot_encode_matern(X_test)
-
-
-#### CROSS VALIDATION
-# test inner cv loop for hyperparameter tuning
-k = 30
-mus, vars, y_true, prams = GP.cv_param_tuning_mat(X_trainOH, y_train, k, init_param=(1,50))
-
-# calculate and print scores
-r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
-
-# draw simple correlation plot
-GP.correlation_plot(y_true, mus, cor_line=False, save_fig=False) #, out_file =str(dir_outMa+'Ma_corr_CV_simple.png'))
-
-# draw correlation plot with standard deviation
-GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCMatern kernel ',
-              R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=False) #, out_file=str(dir_outMa+'Ma_corr_variance_CV.png'))
-
-### hyperparameter just changes minor
-
-
-### Plot the distribution of predicted values
-fig, axs = plt.subplots(1, 2, tight_layout=True)
-
-axs[0].hist(mus, bins = 30)
-axs[1].hist(y_train, bins = 30)
-axs[0].title.set_text('Distribution of predictions')
-axs[1].title.set_text('Distribution of true KDs')
-
-plt.show()
-
-
-
-#BLOSUM45
-
-## CROSS VALIDATION ####
-
-# test inner cv loop for hyperparameter tuning
-k = 25
-mus, vars, y_true, prams_test = GP.cv_param_tuning_CDRd45(X_train, y_train, k)
-
-# calculate and print scores
-r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
-
-# draw simple correlation plot
-GP.correlation_plot(y_true, mus, cor_line=False, save_fig=True, out_file =str(dir_outSubMa+'B45_corr_CV_simple.png'))
-
-
-# draw correlation plot with standard deviation
-GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCDRdist BLOSUM45 ',
-                 R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=True, out_file=str(dir_outSubMa+'B45_corr_variance_CV.png'))
-
-
-
-#BLOSUM62
-
-## CROSS VALIDATION ####
-
-# test inner cv loop for hyperparameter tuning
-k = 25
-mus, vars, y_true, prams_test = GP.cv_param_tuning_CDRd62(X_train, y_train, k)
-
-# calculate and print scores
-r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
-
-# draw simple correlation plot
-GP.correlation_plot(y_true, mus, cor_line=False, save_fig=True, out_file =str(dir_outSubMa+'B62_corr_CV_simple.png'))
-
-
-# draw correlation plot with standard deviation
-GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True,method = '\nCDRdist BLOSUM62 ',
-                 R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=True, out_file=str(dir_outSubMa+'B62_corr_variance_CV.png'))
-
-
-
-
-# PAM40
-
-## CROSS VALIDATION ####
-
-# test inner cv loop for hyperparameter tuning
-k = 25
-mus, vars, y_true, prams_test = GP.cv_param_tuning_CDRdPAM40(X_train, y_train, k)
-
-# calculate and print scores
-r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
-
-# draw simple correlation plot
-GP.correlation_plot(y_true, mus, cor_line=False, save_fig=True, out_file =str(dir_outSubMa+'P40_corr_CV_simple.png'))
-
-
-# draw correlation plot with standard deviation
-GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nCDRdist PAM40 ',
-                 R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=True, out_file=str(dir_outSubMa+'P40_corr_variance_CV.png'))
-
-
-
-
-
-
-
 
 
 

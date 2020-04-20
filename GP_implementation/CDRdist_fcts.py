@@ -67,7 +67,7 @@ def CDRdist45(seq1, seq2):
     dist22 = blosum_distance(seq1, seq1, sub_matrix, AA_dict)
 
     # calculate the CDRdist
-    cdr_dist = 1 - dist12/min(dist11, dist22)
+    cdr_dist = 1 - (np.sqrt(dist12 ** 2 / dist11 * dist22))
 
     return cdr_dist
 
@@ -103,7 +103,7 @@ def CDRdist62(seq1, seq2):
     dist22 = blosum_distance(seq1, seq1, sub_matrix, AA_dict)
 
     # calculate the CDRdist
-    cdr_dist = 1 - dist12/min(dist11, dist22)
+    cdr_dist = 1 - (np.sqrt(dist12**2/dist11 * dist22))
 
     return cdr_dist
 
@@ -139,7 +139,7 @@ def CDRdistPAM40(seq1, seq2):
     dist22 = blosum_distance(seq1, seq1, sub_matrix, AA_dict)
 
     # calculate the CDRdist
-    cdr_dist = 1 - dist12/min(dist11, dist22)
+    cdr_dist = 1 - (np.sqrt(dist12 ** 2 / dist11 * dist22))
 
     return cdr_dist
 

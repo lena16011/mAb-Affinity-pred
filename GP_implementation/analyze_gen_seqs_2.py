@@ -125,12 +125,9 @@ in_dir = ['/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/10_8
 files = ['all_new_seq_gen_pos.csv', 'all_new_seq_gen_neg.csv', 'all_new_seq_gen_mid.csv']
 
 
-
-
-
-
 # chose which file
 i = 2
+
 in_file = in_dir[i] + files[i]
 
 
@@ -148,11 +145,11 @@ seq_lst = list(data.Sequences)
 dist_norm = calculate_norm_dist_matrix(seq_lst)
 
 # save normal. distance matrix and save
-np.savetxt(in_dir[i]+'norm_dist_matrix_1000.csv', dist_norm, delimiter = ',')
+# np.savetxt(in_dir[i]+'norm_dist_matrix_1000.csv', dist_norm, delimiter = ',')
 
 # calculate LD distance matrix and save
 dist_LD = calculate_LD_dist_matrix(seq_lst)
-np.savetxt(in_dir[i]+'LDdist_matrix_.csv', dist_norm, delimiter = ',')
+# np.savetxt(in_dir[i]+'LDdist_matrix_.csv', dist_norm, delimiter = ',')
 
 
 # create ebunches to calculate statistics
@@ -200,50 +197,6 @@ print("max Similarity",'\t',str(round(max_sim, 3)))
 
 
 
-
-
-
-
-
-########### get sequence with lowest LD to consenus sequence
-
-cons_seq = 'QVQLQQSGAELVRPGASVTLSCKASGYTFTDYEMHWVKQTPVHGLEWIGAIDPETGGTAYNQKFKGKATLTADKSSSTAYMELRSLTSEDSAVYYCTRDYYGSNYLAWFAYWGQGTLVTVSA'
-
-# load data from 1000 seq file
-
-
-seqs_neg = pd.read_csv(in_dir[1] + files[1], index_col=0)
-seqs_mid = pd.read_csv(in_dir[2] + files[2], index_col=0)
-seqs_pos = pd.read_csv(in_dir[0] + files[0], index_col=0)
-
-
-seqs_neg['LD_cons'] = seqs_neg['Sequences'].iloc[:].apply(stringdist.levenshtein, args=(cons_seq,))
-seqs_mid['LD_cons'] = seqs_mid['Sequences'].iloc[:].apply(stringdist.levenshtein, args=(cons_seq,))
-seqs_pos['LD_cons'] = seqs_pos['Sequences'].iloc[:].apply(stringdist.levenshtein, args=(cons_seq,))
-
-# print indeces of smallest LD to consensus sequence
-
-print("# sequence (neg) {} with lowest LD ({}) to consensus sequence".format(seqs_neg.LD_cons.values.argmin(),
-                                                                          seqs_neg.LD_cons.values.min()))
-
-print("# sequence (pos) {} with lowest LD ({}) to consensus sequence".format(seqs_pos.LD_cons.values.argmin(),
-                                                                          seqs_pos.LD_cons.values.min()))
-
-print("# sequence (mid) {} with lowest LD ({}) to consensus sequence".format(seqs_mid.LD_cons.values.argmin(),
-                                                                          seqs_mid.LD_cons.values.min()))
-
-
-
-
-lo_LD_neg = seqs_neg[seqs_neg.LD_cons.values == seqs_neg.LD_cons.values.min()]
-lo_LD_neg.to_csv(in_dir[1]+'loLD_seq_neg.csv')
-
-lo_LD_pos = seqs_pos[seqs_pos.LD_cons.values == seqs_pos.LD_cons.values.min()]
-lo_LD_pos.to_csv(in_dir[0]+'loLD_seq_pos.csv')
-
-lo_LD_mid = seqs_mid[seqs_mid.LD_cons.values == seqs_mid.LD_cons.values.min()]
-
-lo_LD_mid.to_csv(in_dir[2]+'loLD_seq_mid.csv')
 
 
 

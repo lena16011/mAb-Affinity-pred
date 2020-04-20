@@ -2,11 +2,13 @@ import pandas as pd
 import stringdist
 
 ''' 
-SELECTION OF VDJS FROM ANNOTATED TABLES FROM OVERLAP AP & SIMILARITY FILTERING 80%
+Script to extract the VDJ sequences with the selected CDR3 sequences from the annotated tables; 
+for further VDJ-based selection
 '''
 
 # Load in the ess_HEL data sets (they were filtered only for unique VDJ nucleotide sequence)
-dir_name = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/filtered_files/'
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
+dir_name = abs_path + '/data/Filtered_files/'
 
 # create file names
 list = ['A', 'B', 'C']
@@ -59,17 +61,19 @@ data_all = data_all.append(data2, ignore_index=True)
 data_all = data_all.append(data3, ignore_index=True)
 
 # save the merged ess_HEL... files
-data_all.to_csv(str(dir_name + 'ess_HEL_all_merged.txt'), sep='\t')
+data_all.to_csv(dir_name + 'ess_HEL_all_merged.txt', sep='\t')
+
+
 
 
 # load in the data of the selected CDR3 data to filter for
-file_path = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/VDJ_selection/'
-file_name = 'overlap_clustering_av_com.txt'
-out_file1 = 'VDJ_data/tot_VDJs_from_Ann_Table_data_av_com.txt'
-out_file2 = 'VDJ_data/uniq_VDJs_from_Ann_Table_data_av_com.txt'
+file_path = abs_path + '/data/VDJ_selection/'
+file_name = 'original_data/overlap_AP_clustering_simfilt80.txt'
+# out_file1 = 'original_data/tot_VDJs_from_Ann_Table_data_AP_simfilt80.txt'
+out_file2 = 'original_data/uniq_VDJs_from_Ann_Table_data_AP_simfilt80.txt'
 
 
-data_AP_sim80 = pd.read_csv(str(file_path + file_name), header=0, sep='\t', low_memory=True)
+data_AP_sim80 = pd.read_csv(file_path + file_name, header=0, sep='\t', low_memory=True)
 
 
 data_filt = pd.DataFrame()
@@ -85,17 +89,14 @@ print('Number of unique VDJs:', len(data_filt.VDJ_AA.unique()))
 # 193 unique VDJs
 
 
-
-
-
 # save the file
-data_filt.to_csv(str(file_path + out_file1), sep='\t', index=None)
+# data_filt.to_csv(file_path + out_file1, sep='\t', index=None)
 
 # drop the duplicate sequences
 data_filt_u = data_filt.drop_duplicates(['VDJ_AA'])
 
 # save only the unique VDJs
-data_filt_u.to_csv(str(file_path + out_file2), sep='\t', index=None)
+data_filt_u.to_csv(file_path + out_file2, sep='\t', index=None)
 
 
 
@@ -123,7 +124,8 @@ print('min. similarity:', 1 - dist_matrix_norm.max().max())
 print('mean similarity:', 1 - dist_matrix_norm.mean(1).mean())
 # the similarity of the VDJs is about 0.5973
 
-
+# save the distance matrix
+dist_matrix_norm.to_csv(file_path + "/distance_matrices/dist_matrix_norm_AP_sim80.txt", sep='\t', index=None)
 
 
 ##### (2) Calculate a abs. Levenshtein distance matrix on VDJ-level
@@ -153,3 +155,6 @@ print(VDJ_len)
 # how many sequences are in the data set with the certain length
 for length in VDJ_len:
     print(length,  ': ', len([x for x in data_filt_u.VDJ_AA if len(x) == length]))
+
+# save the distance matrix
+dist_matrix_LD.to_csv(file_path + "/distance_matrices/dist_matrix_AP_sim80.txt", sep='\t', index=None)

@@ -2,6 +2,8 @@
 import pandas as pd
 import os
 from GP_implementation import GP_fcts as GP
+import matplotlib.pyplot as plt
+
 
 
 ###### SET INPUT DIRECTORIES ######
@@ -12,11 +14,11 @@ input_f_seq = input_dir + 'input_HCs.csv'
 
 
 ## SET OUTPUT DIRECTORIES (for plots to save)
-dir_outLD = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/LD_kernel/'
+dir_out = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/CV_correlation/LD_latest0420/'
 
 # If the output directories do not exist, then create it
-if not os.path.exists(dir_outLD):
-    os.makedirs(dir_outLD)
+if not os.path.exists(dir_out):
+    os.makedirs(dir_out)
 
 
 
@@ -35,7 +37,7 @@ y_train = data['KD_norm'].values
 
 #### CROSS VALIDATION ####
 
-# test inner cv loop for hyperparameter tuning in cv_param_tuning function
+# test model in Leave one out-cv loop for hyperparameter tuning in cv_param_tuning function
 k = 35
 mus, vars, y_true, prams_test = GP.cv_param_tuning(X_train, y_train, k)
 
@@ -43,15 +45,23 @@ mus, vars, y_true, prams_test = GP.cv_param_tuning(X_train, y_train, k)
 r2, cor_coef, MSE= GP.calc_print_scores(y_true, mus, k)
 
 # draw simple correlation plot
-GP.correlation_plot(y_true, mus, cor_line=False, save_fig = False, out_file=None)
+GP.correlation_plot(y_true, mus, cor_line=False, save_fig = True, out_file = dir_out + 'LD_corr_plot_simple.png')
 
 
 # draw correlation plot with standard deviation
 GP.corr_var_plot(y_true, mus, vars, x_std=2, legend=True, method = '\nLD kernel',
-              R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig = False, out_file=None)
+              R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig = True, out_file= dir_out + 'LD_corr_plot.png')
 
 
+### Plot the distribution of predicted values
+fig, axs = plt.subplots(1, 2, tight_layout=True)
 
+axs[0].hist(mus, bins = 30)
+axs[1].hist(y_train, bins = 30)
+axs[0].title.set_text('Distribution of predictions')
+axs[1].title.set_text('Distribution of true KDs')
+plt.savefig(fname=dir_out + 'LD_predDistribution.png', format='png')
+plt.show()
 
 
 

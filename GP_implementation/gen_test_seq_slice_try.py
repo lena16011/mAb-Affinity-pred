@@ -179,7 +179,7 @@ with open(file_name, 'w') as f_out:
 
 
 
-####################### GENERATE ALL POSSIBLE SEUQENCES with threshold ######################
+####################### GENERATE ALL POSSIBLE SEUQENCES but saved with threshold ######################
 #
 # # specify number of sequences that should be processed once
 # proc_step = 1000
@@ -421,38 +421,6 @@ print("negative threshhold to set (mu - 3*stdev): {}\npositive threshold to set 
 #
 
 
-###### SLICE LAZY CARTESIAN PRODUCT ######################
-
-# # TRY to save it in numpy array
-#
-# # initialize numpy array
-# data_save = np.ndarray(shape=(num_gen, 3) )
-#
-# # loop through all seqs in steps
-# for i in range(0, num_gen, proc_step):
-#
-#     # initialize index list
-#     idx_all = random_idx[i: i + proc_step]
-#
-#     # generate random sequences and encode them
-#     X_test = np.asarray([''.join(cp.entryAt(x)) for x in idx_all])
-#     X_test_OH = GP.one_hot_encode_matern(X_test)
-#
-#     # predict X_test
-#     mu_test, var_test = GP.predict_GP_mat(X_train_OH, y_train, X_test_OH, opt_param)
-#
-#     # print for predicted
-#     print("{} sequences predicted".format(i+proc_step))
-#
-#     # iterate through mus/vars to write in file
-#     data_save[0] = np.append(idx_all)
-#     data_save[1] = np.append(mu_test)
-#     data_save[2] = np.append(var_test)
-#
-#
-#
-#
-#
 
 
 
