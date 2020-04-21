@@ -90,7 +90,12 @@ print('Number of unique VDJs:', len(data_filt.VDJ_AA.unique()))
 
 
 # save the file
-# data_filt.to_csv(file_path + out_file1, sep='\t', index=None)
+data_filt.to_csv(file_path + 'VDJ_final_data/VDJs_Selection_with_CDR3.txt', sep='\t', index=None)
+
+# save the file for further selection steps (k-Medoids)
+data_filt.to_csv(file_path + out_file1, sep='\t', index=None)
+
+
 
 # drop the duplicate sequences
 data_filt_u = data_filt.drop_duplicates(['VDJ_AA'])
@@ -98,7 +103,8 @@ data_filt_u = data_filt.drop_duplicates(['VDJ_AA'])
 # save only the unique VDJs
 data_filt_u.to_csv(file_path + out_file2, sep='\t', index=None)
 
-
+# save the file for further selection steps (k-Medoids)
+data_filt_u.to_csv(file_path + 'VDJ_final_data/VDJs_Selection_with_CDR3_Suppl_Table.txt', sep='\t', index=None)
 
 
 ######## (1) Calculate a norm. Levenshtein distance matrix on VDJ-level
