@@ -23,7 +23,7 @@ Script to extract additional information from CDR3 tables for the selected seque
 # - Majority_Isotype: 13
 '''
 
-
+import os
 import pandas as pd
 import matplotlib_venn as venn
 from matplotlib import pyplot as plt
@@ -56,16 +56,23 @@ input_filt_CDR3_70 = abs_path + '/data/Filtered_files/similarity70_FilesAA/simfi
 save_bool1 = False
 output_dir1 = abs_path+'/data/Clustering/Summary/'
 
+if not os.path.exists(output_dir1):
+    os.makedirs(output_dir1)
+
 # set boolean to save file of the overlapping sequences that appear in the target cluster
 # (complete20, average60 and Affinity propagation) and similarity filtering
 save_bool2 = False
 output_dir2 = abs_path+'/data/Clustering/Summary/'
 
+if not os.path.exists(output_dir2):
+    os.makedirs(output_dir2)
+
 # set boolean to save venn plots
 save_bool_plots = False
 output_plots = abs_path+'/data/Plots/CDR3_Selection/'
 
-
+if not os.path.exists(output_plots):
+    os.makedirs(output_plots)
 
 
 
