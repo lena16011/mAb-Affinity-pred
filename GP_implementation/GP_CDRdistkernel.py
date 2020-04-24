@@ -1,23 +1,36 @@
+'''
+Script does the LOO-CV for the measured VDJ variants with a kernel based on the **CDRdist measure**
+(which is based on BLOSUM and PAM substitution matrices).
+
+- for each cycle, the model is trained on 34 of the variants and predicts the affinity of the remaining one
+- all of the predicted and measured affinities are compared and R^2, pearson correlation coefficient, MSE are
+calculated.
+- correlation plots are drawn and saved
+'''
+
 
 import pandas as pd
 import os
-from GP_implementation import GP_fcts as GP
+from utils import GP_fcts as GP
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 
 ###### SET INPUT DIRECTORIES ######
-input_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/input/'
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
+input_dir = '/data/input/'
 
 input_f_seq = input_dir + 'input_HCs.csv'
 
 
-
 ## SET OUTPUT DIRECTORIES (for plots to save)
-dir_out1 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/CV_correlation/CDRdistB45latest0420/'
-dir_out2 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/CV_correlation/CDRdistB62latest0420/'
-dir_out3 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/CV_correlation/CDRdistPAM40latest0420/'
+
+dir_out = abs_path + '/data/Plots/GP_model/CV_correlation/LD_kernel/'
+
+dir_out1 = abs_path + '/data/Plots/GP_model/CV_correlation/CDRdistB45/'
+dir_out2 = abs_path + '/data/Plots/GP_model/CV_correlation/CDRdistB62/'
+dir_out3 = abs_path + '/data/Plots/GP_model/CV_correlation/CDRdistPAM140/'
 
 # If the output directories do not exist, then create it
 if not os.path.exists(dir_out1):

@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split, KFold
 from scipy import optimize, linalg
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, mean_squared_error
-from GP_implementation import CDRdist_fcts as cd
+from utils import CDRdist_fcts as cd
 from sklearn.metrics.pairwise import euclidean_distances
 
 

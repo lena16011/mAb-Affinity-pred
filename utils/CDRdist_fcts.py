@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 
 
-### substitution matrix per default loaded from this location; otherwise change in CDRdist() function
-# matrix_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/SW_aligner/ProteinNucleotideSequenceAlignment-master/matrices/blosum45_edited.csv'
-# dict_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/SW_aligner/ProteinNucleotideSequenceAlignment-master/matrices/AA_dict.csv'
-
-
+### substitution matrix per default loaded from location in the function (./data/substitution_matrices/);
+# otherwise that needs to be changed in CDRdist() function
+abs_path = '/GP_implementation'
 
 def blosum_distance(seq1, seq2, sub_matrix, AA_dict):
     '''
@@ -48,8 +46,8 @@ def CDRdist45(seq1, seq2):
     :return: CDRdist : distance value between 2 sequences
     '''
     # load substitution matrix and AA_dict
-    matrix_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/substitution_matrices/blosum45_edited.csv'
-    dict_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/substitution_matrices/AA_dict.csv'
+    matrix_infile = abs_path + '/data/substitution_matrices/blosum45_edited.csv'
+    dict_infile = abs_path + '/data/substitution_matrices/AA_dict.csv'
 
     # read AA dict from csv file
     AA_dict = {}
@@ -84,8 +82,8 @@ def CDRdist62(seq1, seq2):
     :return: CDRdist : distance value between 2 sequences
     '''
     # load substitution matrix and AA_dict
-    matrix_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/substitution_matrices/BLOSUM62_edited.csv'
-    dict_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/substitution_matrices/AA_dict.csv'
+    matrix_infile = abs_path + '/data/substitution_matrices/BLOSUM62_edited.csv'
+    dict_infile = abs_path + '/data/substitution_matrices/AA_dict.csv'
 
     # read AA dict from csv file
     AA_dict = {}
@@ -120,8 +118,8 @@ def CDRdistPAM40(seq1, seq2):
     :return: CDRdist : distance value between 2 sequences
     '''
     # load substitution matrix and AA_dict
-    matrix_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/substitution_matrices/PAM40_edited.csv'
-    dict_infile = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/substitution_matrices/AA_dict.csv'
+    matrix_infile = abs_path + '/data/substitution_matrices/PAM40_edited.csv'
+    dict_infile = abs_path + '/data/substitution_matrices/AA_dict.csv'
 
     # read AA dict from csv file
     AA_dict = {}
