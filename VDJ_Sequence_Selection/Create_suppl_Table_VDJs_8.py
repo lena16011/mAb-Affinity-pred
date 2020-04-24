@@ -7,6 +7,7 @@ VDJ_id  |   Count  --> dep. on in which file |   Frequency --> dep. on in which 
 
 import pandas as pd
 import numpy as np
+import os
 
 # specify input path of the VDJ sequences
 abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
@@ -16,6 +17,8 @@ path_VDJs = abs_path + '/data/VDJ_selection/original_data/uniq_VDJs_from_Ann_Tab
 path_annot_table = abs_path + '/data/Annotation_tables'
 
 path_final_out = abs_path + '/data/VDJ_selection/VDJ_final_data'
+if not os.path.exists(path_final_out):
+    os.makedirs(path_final_out)
 
 
 

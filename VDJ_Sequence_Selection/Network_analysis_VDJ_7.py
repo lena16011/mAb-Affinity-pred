@@ -21,7 +21,7 @@ import math
 import networkx as nx
 import random
 from utils import NW_functions as NW
-
+import os
 
 ####### Input data are the VDJs selected from the overlap of affinity propagation and similarity filtering
 
@@ -30,6 +30,11 @@ abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
 
 in_file_path = abs_path + '/data/VDJ_selection/VDJ_final_data/VDJs_Selection_with_CDR3.txt'
 in_file_freqs = abs_path + '/data/VDJ_selection/VDJ_final_data/VDJ_Selection_with_CDR3_Suppl_Table.txt'
+
+# create output_path
+if not os.path.exists(abs_path + '/data/Plots/VDJ_selection/'):
+    os.makedirs(abs_path + '/data/Plots/VDJ_selection/')
+
 
 # set target sequences
 t_cdr = 'CTRDYYGSNYLAWFAYW'
@@ -124,7 +129,7 @@ nx.draw(G2, pos=pos, node_color=colors, font_size=7, node_size=150, with_labels=
 ax.set_title(label=str('Network plot with k=' + str(k) + ' and norm_LD-threshold =' + str(thres) +
               '\nnumber of edges connected to target node: ' + str(n_tar_edges)),
              fontdict={'fontsize': 20})
-# fig.savefig(str('/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/VDJ_selection/NW_plot_VDJ_thresh'+str(thres)[2:]+'.pdf'))
+fig.savefig(abs_path + '/data/Plots/VDJ_selection/NW_plot_VDJ_thresh'+str(thres)[2:]+'.pdf'))
 fig.show()
 
 

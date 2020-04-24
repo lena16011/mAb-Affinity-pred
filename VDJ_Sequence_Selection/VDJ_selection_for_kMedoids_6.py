@@ -1,5 +1,6 @@
 import pandas as pd
 import stringdist
+import os
 
 ''' 
 Script to extract the VDJ sequences with the selected CDR3 sequences from the annotated tables; 
@@ -9,6 +10,17 @@ for further VDJ-based selection
 # Load in the ess_HEL data sets (they were filtered only for unique VDJ nucleotide sequence)
 abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
 dir_name = abs_path + '/data/Filtered_files/'
+
+file_path = abs_path + '/data/VDJ_selection/'
+
+if not os.path.exists(file_path + 'VDJ_final_data/'):
+    os.makedirs(file_path + 'VDJ_final_data/')
+if not os.path.exists(file_path + 'distance_matrices/'):
+    os.makedirs(file_path + 'distance_matrices/')
+
+
+
+
 
 # create file names
 list = ['A', 'B', 'C']
