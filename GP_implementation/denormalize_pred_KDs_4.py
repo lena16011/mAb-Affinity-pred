@@ -1,5 +1,5 @@
 '''
-Script to convert predicted mus back to KD values
+Script to convert predicted mus back to KD values ===>> NEVER REALLY USED AND UNFINISHED SCRIPT
 '''
 
 
@@ -21,8 +21,10 @@ def unnormalize(n_data, un_data):
 
 
 ###### SET INPUT DIRECTORIES ######
-input_dir1 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/input/'
-input_dir2 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/'
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
+
+input_dir1 = abs_path + '/data/input/'
+input_dir2 = abs_path + '/data/gen_seqs_muvar/'
 
 
 input_f_seq1 = input_dir1 + 'CV_matern_data.csv'
