@@ -7,51 +7,9 @@ combinations of mutations and predicted.
 import pandas as pd
 import stringdist
 import numpy as np
+from utils import NW_functions as NW
 
 
-
-# calculate a distance matrix
-def calculate_norm_dist_matrix(seq_lst):
-    '''
-    function to calculate the distance matrix for further k-Medoids clustering
-    seq_lst is a list of the input sequences for pairwise distance calculation
-    :return: is a pandas dataframe of all distances of the n input sequences to each other;
-             the lower triangular of the matrix is filled;
-    '''
-    # initialize numpy 2d array for the matrix
-    seqs = pd.Series(np.array(seq_lst))
-    D = pd.DataFrame(columns=range(len(seqs)))
-    row = pd.DataFrame(columns=range(len(seqs)))
-    for i, seq in enumerate(seqs):
-        # Calculate the distances as rows of the distance matrix
-        row = seqs.iloc[:].apply(stringdist.levenshtein_norm, args=(seqs.loc[i],))
-        D.loc[i] = row.T
-        if i % 10 == 0:
-            print(i)
-
-
-    return D.values
-
-# calculate a distance matrix
-def calculate_LD_dist_matrix(seq_lst):
-    '''
-    function to calculate the distance matrix for further k-Medoids clustering
-    seq_lst is a list of the input sequences for pairwise distance calculation
-    :return: is a pandas dataframe of all distances of the n input sequences to each other;
-             the lower triangular of the matrix is filled;
-    '''
-    # initialize numpy 2d array for the matrix
-    seqs = pd.Series(np.array(seq_lst))
-    D = pd.DataFrame(columns=range(len(seqs)))
-    row = pd.DataFrame(columns=range(len(seqs)))
-    for i, seq in enumerate(seqs):
-        # Calculate the distances as rows of the distance matrix
-        row = seqs.iloc[:].apply(stringdist.levenshtein, args=(seqs.loc[i],))
-        D.loc[i] = row.T
-        if i % 10 == 0:
-            print(i)
-
-    return D.values
 
 # prepare the sequence list for the network plots; create 3-tuples; just from another script
 # re-used to calculate some statistics
@@ -67,7 +25,6 @@ def ebunch_LD(seqs_lst, dist_matrix, LD = None):
     '''
 
     # initialize numpy 2d array for the matrix
-    seqs = pd.Series(np.array(seqs_lst))
     D = pd.DataFrame(dist_matrix)
 
 
@@ -97,7 +54,6 @@ def ebunch_norm(seqs_lst, dist_matrix, LD = None):
     '''
 
     # initialize numpy 2d array for the matrix
-    seqs = pd.Series(np.array(seqs_lst))
     D = pd.DataFrame(dist_matrix)
 
     # now we can store the 3-tuples with the distances as weights (ebunch for the network graph)
@@ -117,83 +73,73 @@ def ebunch_norm(seqs_lst, dist_matrix, LD = None):
 
 
 ## Set input directories
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
 
-in_dir = ['/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/10_8/pos/',
-          '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/10_8/neg/',
-         '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/midr/']
+in_dir = ['/data/gen_seqs_muvar/10_8/pos/',
+          '/data/gen_seqs_muvar/10_8/neg/',
+          '/data/gen_seqs_muvar/midr/']
 
 files = ['all_new_seq_gen_pos.csv', 'all_new_seq_gen_neg.csv', 'all_new_seq_gen_mid.csv']
 
+# set True, if distance matrices should be stored
+save = False
 
-# chose which file
-i = 2
+# loop through files
+for i in range(len(files)):
 
-in_file = in_dir[i] + files[i]
-
-
-## load data from generated/predicted sequences
-
-data = pd.read_csv(in_file, index_col=0)
-
-### Calculate distance matrices
-
-# get the first sequences as list (with lowest KD)
-seq_lst = list(data.Sequences)
+    in_file = in_dir[i] + files[i]
 
 
-# calculate norm distance matrix
-dist_norm = calculate_norm_dist_matrix(seq_lst)
+    ## load data from generated/predicted sequences
 
-# save normal. distance matrix and save
-# np.savetxt(in_dir[i]+'norm_dist_matrix_1000.csv', dist_norm, delimiter = ',')
+    data = pd.read_csv(in_file, index_col=0)
 
-# calculate LD distance matrix and save
-dist_LD = calculate_LD_dist_matrix(seq_lst)
-# np.savetxt(in_dir[i]+'LDdist_matrix_.csv', dist_norm, delimiter = ',')
+    ### Calculate distance matrices
 
-
-# create ebunches to calculate statistics
-eb = ebunch_LD(seq_lst, dist_LD)
-mean_LD = np.mean([eb[x][2] for x in range(len(eb))])
-max_LD = max([eb[x][2] for x in range(len(eb))])
-
-# similarity
-eb_norm = ebunch_norm(seq_lst, dist_norm)
-mean_sim = 1 - np.mean([eb_norm[x][2] for x in range(len(eb_norm))])
-min_sim = min([1-eb_norm[x][2] for x in range(len(eb_norm))])
-max_sim = max([1-eb_norm[x][2] for x in range(len(eb_norm))])
+    # get the first sequences as list (with lowest KD)
+    seq_lst = list(data.Sequences)
 
 
-# print the stats
-print("file: {}".format(files[index]))
-print("# selected VDJs",'\t',len(dist_LD))
-print("length of VDJs",'\t',np.unique([len(x) for x in seq_lst]))
+    # calculate norm distance matrix
+    dist_norm = NW.calculate_norm_dist_matrix(seq_lst, verbose=True)
 
-print("range of selected LDs",'\t',np.unique(dist_LD))
-print("mean LD",'\t',round(mean_LD, 1))
-print("max LD",'\t',max_LD)
+    # save normal. distance matrix and save
+    if save == True:
+        np.savetxt(in_dir[i]+'norm_dist_matrix_1000.csv', dist_norm, delimiter = ',')
 
-print("mean Similarity",'\t', str(round(mean_sim, 3)))
-print("min Similarity",'\t',str(round(min_sim, 3)))
-print("max Similarity",'\t',str(round(max_sim, 3)))
-
+    # calculate LD distance matrix and save
+    dist_LD = NW.calculate_LD_dist_matrix(seq_lst, verbose=True)
+    if save == True:
+        np.savetxt(in_dir[i]+'LDdist_matrix_.csv', dist_norm, delimiter = ',')
 
 
+    # create ebunches to calculate statistics
+    eb = ebunch_LD(seq_lst, dist_LD)
+    mean_LD = np.mean([eb[x][2] for x in range(len(eb))])
+    max_LD = max([eb[x][2] for x in range(len(eb))])
+
+    # similarity
+    eb_norm = ebunch_norm(seq_lst, dist_norm)
+    mean_sim = 1 - np.mean([eb_norm[x][2] for x in range(len(eb_norm))])
+    min_sim = min([1-eb_norm[x][2] for x in range(len(eb_norm))])
+    max_sim = max([1-eb_norm[x][2] for x in range(len(eb_norm))])
+
+
+    # print the stats
+    print("file: {}".format(files[index]))
+    print("# selected VDJs",'\t',len(dist_LD))
+    print("length of VDJs",'\t',np.unique([len(x) for x in seq_lst]))
+
+    print("range of selected LDs",'\t',np.unique(dist_LD))
+    print("mean LD",'\t',round(mean_LD, 1))
+    print("max LD",'\t',max_LD)
+
+    print("mean Similarity",'\t', str(round(mean_sim, 3)))
+    print("min Similarity",'\t',str(round(min_sim, 3)))
+    print("max Similarity",'\t',str(round(max_sim, 3)))
 
 
 
-
-
-########## Get specifically the first 10 seqs
-
-#get top 10 seqs and save
-# seqs_neg = pd.read_csv(in_dir[1] + files[1], index_col=0, nrows= 10)
-# seqs_mid = pd.read_csv(in_dir[2] + files[2], index_col=0, nrows= 10)
-# seqs_pos = pd.read_csv(in_dir[0] + files[0], index_col=0, nrows= 10)
-#
-# seqs_neg.to_csv(in_dir[1] + 'top10_neg_seqs.csv')
-# seqs_mid.to_csv(in_dir[2] + 'top10_mid_seqs.csv')
-# seqs_pos.to_csv(in_dir[0] + 'top10_pos_seqs.csv')
 
 
 

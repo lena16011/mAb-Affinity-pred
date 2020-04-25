@@ -4,7 +4,7 @@ import numpy as np
 import stringdist
 
 # calculate a distance matrix
-def calculate_norm_dist_matrix(seq_lst):
+def calculate_norm_dist_matrix(seq_lst, verbose=False):
     '''
     function to calculate the distance matrix for further k-Medoids clustering
     seq_lst is a list of the input sequences for pairwise distance calculation
@@ -19,10 +19,13 @@ def calculate_norm_dist_matrix(seq_lst):
         # Calculate the distances as rows of the distance matrix
         row = seqs.iloc[:].apply(stringdist.levenshtein_norm, args=(seqs.loc[i],))
         D.loc[i] = row.T
+        if verbose == True and i % 10 == 0:
+            print(i+" seqs processed")
+
     return D.values
 
 # calculate a distance matrix
-def calculate_LD_dist_matrix(seq_lst):
+def calculate_LD_dist_matrix(seq_lst, verbose=False):
     '''
     function to calculate the distance matrix for further k-Medoids clustering
     seq_lst is a list of the input sequences for pairwise distance calculation
@@ -37,6 +40,9 @@ def calculate_LD_dist_matrix(seq_lst):
         # Calculate the distances as rows of the distance matrix
         row = seqs.iloc[:].apply(stringdist.levenshtein, args=(seqs.loc[i],))
         D.loc[i] = row.T
+        if verbose == True and i % 10 == 0:
+            print(i+" seqs processed")
+
     return D.values
 
 # prepare the sequence list for the network plots; create 3-tuples; just from another script
