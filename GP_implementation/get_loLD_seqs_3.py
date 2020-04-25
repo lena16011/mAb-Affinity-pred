@@ -8,9 +8,17 @@ import stringdist
 import numpy as np
 
 
+## Set input directories
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
 
-########### get sequence with lowest LD to consenus sequence
+in_dir = [abs_path + '/data/gen_seqs_muvar/10_8/pos/',
+          abs_path + '/data/gen_seqs_muvar/10_8/neg/',
+          abs_path + '/data/gen_seqs_muvar/midr/']
 
+files = ['all_new_seq_gen_pos.csv', 'all_new_seq_gen_neg.csv', 'all_new_seq_gen_mid.csv']
+
+
+# consensus sequence
 cons_seq = 'QVQLQQSGAELVRPGASVTLSCKASGYTFTDYEMHWVKQTPVHGLEWIGAIDPETGGTAYNQKFKGKATLTADKSSSTAYMELRSLTSEDSAVYYCTRDYYGSNYLAWFAYWGQGTLVTVSA'
 
 # load data from 1000 seq file
@@ -46,6 +54,5 @@ lo_LD_pos = seqs_pos[seqs_pos.LD_cons.values == seqs_pos.LD_cons.values.min()]
 lo_LD_pos.to_csv(in_dir[0]+'loLD_seq_pos.csv')
 
 lo_LD_mid = seqs_mid[seqs_mid.LD_cons.values == seqs_mid.LD_cons.values.min()]
-
 lo_LD_mid.to_csv(in_dir[2]+'loLD_seq_mid.csv')
 

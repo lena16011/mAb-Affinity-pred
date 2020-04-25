@@ -75,9 +75,9 @@ def ebunch_norm(seqs_lst, dist_matrix, LD = None):
 ## Set input directories
 abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
 
-in_dir = ['/data/gen_seqs_muvar/10_8/pos/',
-          '/data/gen_seqs_muvar/10_8/neg/',
-          '/data/gen_seqs_muvar/midr/']
+in_dir = [abs_path + '/data/gen_seqs_muvar/10_8/pos/',
+          abs_path + '/data/gen_seqs_muvar/10_8/neg/',
+          abs_path + '/data/gen_seqs_muvar/midr/']
 
 files = ['all_new_seq_gen_pos.csv', 'all_new_seq_gen_neg.csv', 'all_new_seq_gen_mid.csv']
 
