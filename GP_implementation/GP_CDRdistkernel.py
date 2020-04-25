@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 ###### SET INPUT DIRECTORIES ######
 abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
-input_dir = '/data/input/'
+input_dir = abs_path + '/data/input/'
 
 input_f_seq = input_dir + 'input_HCs.csv'
 

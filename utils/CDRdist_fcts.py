@@ -4,7 +4,7 @@ import pandas as pd
 
 ### substitution matrix per default loaded from location in the function (./data/substitution_matrices/);
 # otherwise that needs to be changed in CDRdist() function
-abs_path = '/GP_implementation'
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
 
 def blosum_distance(seq1, seq2, sub_matrix, AA_dict):
     '''
