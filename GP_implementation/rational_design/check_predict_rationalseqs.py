@@ -4,10 +4,7 @@ Script to predict the newly, rationally designed sequences
 
 
 import pandas as pd
-from GP_implementation import GP_fcts as GP
-
-
-
+from utils import GP_fcts as GP
 
 in_dir1 = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/rational_design/'
 in_f1 = in_dir1 + 'rational_de_seqs.csv'

@@ -97,7 +97,7 @@ def calculate_distance_matrix(dataset):
 ############# set the input directories
 abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection/'
 input_dir = abs_path+'data/Filtered_files/'
-input_file_seq = abs_path+'data/Annotation_tables/sequences.fasta'
+input_file_seq = abs_path+'data/Filtered_files/sequences.fasta'
 
 
 #specify the similarity threshold to filter the sequences for
@@ -302,8 +302,7 @@ if length_filtering == True:
     # where in the matrix is the target sequence
     target_entry2 = data_uniq_length[data_uniq_length['CDR3_AA']==target_CDR3_AA]
     print(target_entry2)
-    # different than found before!!!
-    # 1069     34    productive  ...        A     3
+
 
 
     #Calculate a new distance matrix for the new sequences

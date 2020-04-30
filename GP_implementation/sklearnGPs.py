@@ -1,13 +1,9 @@
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
-from GP_implementation import GP_fcts as GP
+from utils import GP_fcts as GP
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern, RBF, ConstantKernel
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.model_selection import train_test_split, KFold
-from sklearn.metrics.pairwise import euclidean_distances
-
+from sklearn.model_selection import KFold
 
 ###### SET INPUT DIRECTORIES ######
 input_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/input/'
