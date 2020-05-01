@@ -70,7 +70,9 @@ def AA_to_NT(seqs, consensus_AA, consensus_NT, mut_df):
 
 
 # input directorie
-in_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/gen_seqs_muvar/'
+abs_path = 'D:/Dokumente/Masterarbeit/Lena/GP_implementation'
+
+in_dir = abs_path + '/data/gen_seqs_muvar/'
 in_file = in_dir + '15_selected_seq_data.csv'
 
 
