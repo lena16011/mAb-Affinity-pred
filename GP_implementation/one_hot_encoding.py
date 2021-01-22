@@ -1,5 +1,5 @@
 '''
-Script to load the amino acid sequences and to create files to one-hot-encode sequences;
+Script to load the amino acid sequences and to one-hot-encode sequences and to create file;
 '''
 
 import os

@@ -2,15 +2,8 @@
 import os
 import numpy as np
 import pandas as pd
-import stringdist as sd
-from sklearn.model_selection import train_test_split, KFold
-from scipy import optimize, linalg
 import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.metrics.pairwise import euclidean_distances
-from GP_implementation import GP_fcts as GP
-
-
+from utils import GP_fcts as GP
 
 ## SET INPUT DIRECTORIES ####
 input_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/herceptin/'

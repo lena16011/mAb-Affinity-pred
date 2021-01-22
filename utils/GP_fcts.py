@@ -1257,7 +1257,7 @@ def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
                      alpha = 0.3 , interpolate=True, color = 'orange')
 
     # set color list for the data points
-    cols = list(np.concatenate((np.repeat('b',30),np.repeat('r',5))))
+    cols = list(np.concatenate((np.repeat('b',len(x_train)),np.repeat('r',len(x_test)))))
 
     plt.scatter(x_train, y_pred_train, color='k')
     plt.scatter(x_test, y_pred_test, color='r')

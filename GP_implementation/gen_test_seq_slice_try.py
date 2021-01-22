@@ -1,9 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-import itertools as it
-from GP_implementation import GP_fcts as GP
-from GP_implementation import lazyCartProduct as catprod
+from utils import GP_fcts as GP, lazyCartProduct as catprod
 import random
 import matplotlib.pyplot as plt
 import math
