@@ -26,14 +26,13 @@ import os
 ####### Input data are the VDJs selected from the overlap of affinity propagation and similarity filtering
 
 # set the input path and file
-abs_path = 'D:/Dokumente/Masterarbeit/Lena/VDJ_Sequence_Selection'
-
-in_file_path = abs_path + '/data/VDJ_selection/VDJ_final_data/VDJs_Selection_with_CDR3.txt'
-in_file_freqs = abs_path + '/data/VDJ_selection/VDJ_final_data/VDJ_Selection_with_CDR3_Suppl_Table.txt'
+abs_path = os.getcwd()
+in_file_path = os.path.join(abs_path, 'VDJ_Sequence_Selection/data/VDJ_Selection/VDJ_final_data/VDJs_Selection_with_CDR3.txt')
+in_file_freqs = os.path.join(abs_path, 'VDJ_Sequence_Selection/data/VDJ_Selection/VDJ_final_data/VDJ_Selection_with_CDR3_Suppl_Table.txt')
 
 # create output_path
-if not os.path.exists(abs_path + '/data/Plots/VDJ_selection/'):
-    os.makedirs(abs_path + '/data/Plots/VDJ_selection/')
+if not os.path.exists(os.path.join(abs_path, 'VDJ_Sequence_Selection/data/Plots/VDJ_selection/')):
+    os.makedirs(os.path.join(abs_path, 'VDJ_Sequence_Selection/data/Plots/VDJ_selection/'))
 
 
 # set target sequences
@@ -101,12 +100,12 @@ thres = 0.99
 #  we apply the distance threshold from which we assume they are not connected anymore;
 data_filt = data_tup_all.copy()
 [data_filt.remove(tup) for tup in data_tup_all if tup[2] < thres]
-n_tar_edges = len([tup for tup in data_filt if (tup[0]==tar_idx or tup[1]==tar_idx)])
+#n_tar_edges = len([tup for tup in data_filt if (tup[0]==tar_idx or tup[1]==tar_idx)])
 
 
 print(str('Number of edges in the unfiltered node: ' + str(len(data_tup_all))))
 print(str('Number of edges in the filtered node (threshold: ' + str(thres) + '): ' + str(len(data_filt))))
-# print(str('Number of edges connected to our target node: ' + str(n_tar_edges)))
+print(str('Number of edges connected to our target node: ' + str(len([tup for tup in data_filt if (tup[0]==tar_idx or tup[1]==tar_idx)]))))
 
 
 # set k (optimal distance between nodes) as a parameter for the Fruchtermann-Reingold algorithm
@@ -129,7 +128,7 @@ nx.draw(G2, pos=pos, node_color=colors, font_size=7, node_size=150, with_labels=
 ax.set_title(label=str('Network plot with k=' + str(k) + ' and norm_LD-threshold =' + str(thres) +
               '\nnumber of edges connected to target node: ' + str(n_tar_edges)),
              fontdict={'fontsize': 20})
-fig.savefig(abs_path + '/data/Plots/VDJ_selection/NW_plot_VDJ_thresh'+str(thres)[2:]+'.pdf'))
+#fig.savefig(abs_path + '/data/Plots/VDJ_selection/NW_plot_VDJ_thresh'+str(thres)[2:]+'.pdf'))
 fig.show()
 
 
@@ -142,22 +141,22 @@ print('LD of the target sequence vs all', set([tup[2] for tup in data_tup2 if (t
 print('All occuring LDs:', set([tup[2] for tup in data_tup2]))
 # our target sequence has LDs in the range of 1-3 to all the other sequences
 print('number of sequences that have LD 1: ', len([tup[2] for tup in data_tup2 if tup[2]==1]))
-print('number of sequences that have LD 2: ', len([tup[2] for tup in data_tup2 if tup[2]==2]))
-print('number of sequences that have LD 3: ', len([tup[2] for tup in data_tup2 if tup[2]==3]))
-print('number of sequences that have LD 10: ', len([tup[2] for tup in data_tup2 if tup[2]==10]))
-print('number of sequences that have LD 20: ', len([tup[2] for tup in data_tup2 if tup[2]==20]))
-print('number of sequences that have LD 27: ', len([tup[2] for tup in data_tup2 if tup[2]==27]))
+print('number of sequences that have LD 2: ', len([tup[2] for tup in data_tup2 if tup[2]<=2]))
+print('number of sequences that have LD 3: ', len([tup[2] for tup in data_tup2 if tup[2]<=3]))
+print('number of sequences that have LD 10: ', len([tup[2] for tup in data_tup2 if tup[2]<=10]))
+print('number of sequences that have LD 20: ', len([tup[2] for tup in data_tup2 if tup[2]<=20]))
+print('number of sequences that have LD 27: ', len([tup[2] for tup in data_tup2 if tup[2]<=27]))
 
 ### Extract the tuples that have LD=x with the target sequence
 LD = 1
 data_tup_LD = [tup for tup in data_tup2 if tup[2]<=LD]
-print(set([tup[0] for tup in data_tup2] + [tup[1] for tup in data_tup2 if tup[2]==LD]))
+print(set([tup[0] for tup in data_tup2] + [tup[1] for tup in data_tup2 if tup[2]<=LD]))
 # see the sequnces that appear to have edges with LD=2 or 2
 print(len(data_tup_LD))
 
 
-n_tar_edges = len([tup for tup in data_tup_LD if (tup[0]==t_idx or tup[1]==t_idx)])
-print(str('Number of edges connected to our target node: ' + str(n_tar_edges)))
+
+print(str('Number of edges connected to our target node: ' + str(len([tup for tup in data_tup_LD if (tup[0]==t_idx or tup[1]==t_idx)]))))
 # 16 nodes bei LD1
 
 k3 = 0.19
