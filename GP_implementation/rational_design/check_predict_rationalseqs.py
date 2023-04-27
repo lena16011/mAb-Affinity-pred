@@ -38,6 +38,8 @@ input_f_seq = input_dir + 'input_HCs.csv'
 data = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence', 'KD'])
 
 
+
+
 #### DATA PROCESSING ####
 # normalize data
 data['KD_norm'] = GP.normalize_test_train_set(data['KD'])
