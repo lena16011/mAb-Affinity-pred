@@ -1103,7 +1103,7 @@ def correlation_plot(measured, predicted, cor_line = True, x_lim = 2.5, y_lim = 
     # plt.savefig(path_outputs + str(property_)+'_matern_kernel_CV.pdf', bbox_inches='tight', transparent=True)
 
     if save_fig == True:
-        plt.savefig(fname=out_file, format='png')
+        plt.savefig(fname=out_file)
 
     plt.show()
 
@@ -1191,7 +1191,7 @@ def corr_var_plot(measured, predicted, vars, x_std=1, legend = False, method = N
             item.set_visible(False)
 
     if save_fig == True:
-        plt.savefig(fname=out_file, format='png')
+        plt.savefig(fname=out_file)
 
     plt.show()
 
@@ -1279,7 +1279,7 @@ def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
             item.set_visible(False)
 
     if save_fig == True:
-        plt.savefig(fname=out_file, format='png')
+        plt.savefig(fname=out_file)
 
     plt.show()
 
