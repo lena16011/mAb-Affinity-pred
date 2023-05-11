@@ -12,7 +12,7 @@ import os
 from matplotlib import pyplot as plt
 from utils import GP_fcts as GP
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.model_selection import KFold, GridSearchCV, cross_validate
+from sklearn.model_selection import KFold, GridSearchCV, cross_val_predict
 
 
 
@@ -32,7 +32,6 @@ def nested_param_tuning_eval(X_OH, y, reg, param_grid, k=10, k_i=5, metrics=['ne
 
     # Non_nested parameter search and scoring
     grid_search.fit(X_OH, y)
-    non_nested_best_params = grid_search.best_params_
 
     # combine scores to a dataframe
     non_nested_cv_df = pd.DataFrame()
@@ -120,7 +119,7 @@ X_OH = GP.one_hot_encode_matern(X)
 
 
 ###### MODEL EVALUATION WITH NESTED CROSS VALIDATION #####
-###### RIDGE REGRESSION IMPLEMENTATION FROM SKLEARN WITHOUT KERNEL hyper parameter tuning #####
+###### RIDGE REGRESSION IMPLEMENTATION FROM SKLEARN hyper parameter tuning #####
 
 # parameter grid
 param_grid = {
@@ -132,12 +131,14 @@ param_grid = {
 model_name = "KernelRidge"
 reg = KernelRidge()
 k = 10
-k_l = [2, 3, 5, 10,20, 35]
+k_l = [2, 3, 5, 10, 20, 35]
+
 non_nested_scores = []
 nested_scores = []
 non_nested_mins = []
 non_nested_maxs = []
 
+###### EVALUATION OF Ks; NESTED CV #####
 # evaluate different ks
 for k in k_l:
     non_nested_cv_df, nested_cv_df = nested_param_tuning_eval(X_OH, y, reg, param_grid, k=k, k_i=5, metrics=['neg_mean_squared_error', 'r2'])
@@ -148,8 +149,8 @@ for k in k_l:
 
 print('Non-nested scores per k: {}'.format(non_nested_scores))
 print('Nested scores per k: {}'.format(nested_scores))
-print('Mean non-nested scores over k: {}'.format(np.mean(non_nested_scores)))
-print('Mean nested scores over k: {}'.format(np.mean(nested_scores)))
+print('Mean non-nested scores over k: {}, std: {}'.format(np.mean(non_nested_scores), np.std(non_nested_scores)))
+print('Mean nested scores over k: {}, std: {}'.format(np.mean(nested_scores), np.std(nested_scores)))
 
 
 # line plot of k mean values with min/max error bars
@@ -161,20 +162,42 @@ plt.title("Nested CV (black) and non-nested (blue) - \n %s - per k vs. LOOCV (re
 plt.xlabel('k fold')
 plt.ylabel('MSE')
 
-plt.savefig(fname = os.path.join(dir_out, 'k_sensitivity_nestedCV_%s.pdf' % model_name))
+#plt.savefig(fname = os.path.join(dir_out, 'k_sensitivity_nestedCV_%s.pdf' % model_name))
 # show the plot
 plt.show()
 
 
+
 ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
+### LOO CV
+k=35
+metrics = ['neg_mean_squared_error']
+
+kf = KFold(n_splits=k, shuffle=True, random_state=1) # Define the n_split = number of folds
+
+# Define the grid search object - non-nested
+grid_search = GridSearchCV(estimator=reg,
+                           param_grid=param_grid,
+                           scoring= metrics,
+                           cv=kf,
+                           refit=metrics[0])
+
+# Non_nested parameter search and scoring
+grid_search.fit(X_OH, y)
+best_model = grid_search.best_estimator_
+best_score = grid_search.best_score_
+print('Best model: ', best_model)
+print('Best score: ', best_score)
 
 
+# Obtain the predicted values using cross-validation
+y_pred = cross_val_predict(best_model, X_OH, y, cv=kf, verbose=1)
 
+r2, cor_coef, MSE= GP.calc_print_scores(y, y_pred, k)
 
-
-
-
-
+from utils import GP_fcts as GP
+GP.corr_var_plot(y, y_pred, vars=False, x_std=2, legend = True, method = "\n" + model_name + " regression",
+                  R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig = True, out_file=os.path.join(dir_out, 'KernelRidge_corr_plot.pdf'))
 
 
 
@@ -186,46 +209,6 @@ plt.show()
 ########################################################################
 
 
-# initialize lists to store the predictions
-mu_s = []
-y_s = []
-params_test = []
-
-### LOO CV
-k = len(X_OH)
-kf = KFold(n_splits=k, shuffle=True, random_state=1) # Define the n_split = number of folds
-cycle_num = 0
-kernel = 'linear'
-
-
-# loop for the CV
-for train_index, test_index in kf.split(X_OH):
-
-    #split in train and test set
-    X_train, X_test = X_OH[train_index], X_OH[test_index]
-    y_train, y_test = y[train_index], y[test_index]
-
-    reg = KernelRidge(kernel = 'linear',
-                      alpha=1.0).fit(X_train,y_train)
-
-    gprMatpred = reg.predict(X = X_test)
-
-    mu_s.append(gprMatpred)
-    y_s.append(y_test)
-    params_test.append(reg.get_params)
-
-    print(cycle_num)
-    cycle_num += 1
-
-y_s = np.array(y_s).flatten()
-mu_s = np.array(mu_s).flatten()
-
-r2, cor_coef, MSE= calc_print_scores(y_s, mu_s, k)
-
-
-# GP.corr_var_plot(y_s, mu_s, x_std=2, legend = True, method = "\n" + kernel + " kernel",
-#                   R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig = False, out_file=f_out)
-#
 
 
 
@@ -241,20 +224,6 @@ class KD_Ridge_reg:
 
 
 
-
-# try to return something like that
-# initialize lists to store the predictions
-mu_s = []
-std_s = []
-y_s = []
-params_test = []
-
-
-# to be able to use the plot
-r2, cor_coef, MSE= GP.calc_print_scores(y_s, mu_s, k)
-
-GP.corr_var_plot(y_s, mu_s, vars_s, x_std=2, legend = True, method = "\n" + kernel + " kernel",
-                  R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig = False, out_file=f_out)
 
 
 
