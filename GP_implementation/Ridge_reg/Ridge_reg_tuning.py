@@ -48,7 +48,7 @@ class regression_model_evaluation:
         # Non_nested parameter search and scoring
         grid_search_nn.fit(self.X_OH, self.y)
 
-        # combine non-nested scores to dataframe (
+        # combine non-nested scores to dataframe (and add to the summary scores
         non_nested_cv_df = pd.DataFrame()
         cols = [match for match in grid_search_nn.cv_results_.keys() if "param_" in match or "mean_test" in match or "std_test" in match]
         for c in cols:
@@ -56,15 +56,23 @@ class regression_model_evaluation:
         # add params
         non_nested_cv_df['params'] = grid_search_nn.cv_results_['params']
 
+        # adjust negative scores (like neg. MSE)
+        grid_search_nn.best_score_ = -1*grid_search_nn.best_score_
+        cols = [match for match in non_nested_cv_df.columns if "mean_test" in match]
+        for c in cols:
+            if all(non_nested_cv_df[c] < 0):
+                non_nested_cv_df[c] = non_nested_cv_df[c]*-1
+
+        best_score_n = "mean_test_"+list(self.metrics.keys())[0]
+        second_score = "mean_test_"+list(self.metrics.keys())[1]
         if verbose > 0:
             # print non-nested CV score
             print('K value: %d' % (k_o))
-            print('non-Nested CV best mse score: %0.3f' % (grid_search_nn.best_score_))
-            print('non-Nested CV best r2 score: %0.3f' % (np.unique(grid_search_nn.cv_results_["mean_test_r2"][grid_search_nn.cv_results_["mean_test_neg_MSE"] == grid_search_nn.best_score_])))
-            print('Best parameters:', grid_search_nn.best_params_)
+            print('non-Nested CV best mse score: %0.3f' % grid_search_nn.best_score_)
+            #print(np.unique(grid_search_nn.cv_results_[second_score][grid_search_nn.cv_results_[best_score_n] == -1*grid_search_nn.best_score_]))
+            print('non-Nested CV best r2 score: %0.3f' % (np.unique(grid_search_nn.cv_results_[second_score][grid_search_nn.cv_results_[best_score_n] == -1*grid_search_nn.best_score_])))
             print('----------------')
 
-        # non_nested_cv_df.mean_test_r2[non_nested_cv_df.params == grid_search_nn.best_params_]
 
         # Perform nested cross-validation
         mse_scores = []
@@ -100,9 +108,29 @@ class regression_model_evaluation:
             print('Best parameters:', best_params)
             print('----------------------------------\n')
         # combine scores to a dataframe & get best performing parameters
-        nested_cv_df = pd.DataFrame(data={"MSE": mse_scores, "best_params": best_params})
+        nested_cv_df = pd.DataFrame()
+        scores = [mse_scores, r2_scores]
+        for i, c in enumerate(cols):
+            nested_cv_df[c] = scores[i]
+        nested_cv_df["best_params"] = best_params
 
-        return non_nested_cv_df, nested_cv_df
+        # summarize and save the scores per model (nested and non-nested)
+        b_score = min(non_nested_cv_df.mean_test_neg_MSE)
+
+        # summarize in dataframe
+        scores_df = pd.DataFrame()
+        scores_df["model_name"] = [self.model_name]
+        scores_df["MSE_nonnested"] = [b_score]
+        scores_df["R2_nonnested"] = non_nested_cv_df["mean_test_r2"][non_nested_cv_df.mean_test_neg_MSE == b_score].values[0]
+        scores_df["best_params_nonnested"] = non_nested_cv_df["params"][non_nested_cv_df.mean_test_neg_MSE == b_score]
+        scores_df["MSE_nested"] = np.mean(nested_cv_df.mean_test_neg_MSE)
+        scores_df["R2_nested"] = np.mean(nested_cv_df.mean_test_r2)
+        scores_df["k_outer"] = [k_outer]
+        scores_df["k_inner"] = [5]
+        nested_cv_df.best_params = nested_cv_df.best_params.astype("string")
+        scores_df["mostselected_params_nested"] = nested_cv_df.best_params[max(nested_cv_df.best_params.value_counts())]
+
+        return non_nested_cv_df, nested_cv_df, scores_df
 
 
     def evaluate_k(self, param_grid, k_in, k_l, verbose=0):
@@ -119,14 +147,14 @@ class regression_model_evaluation:
         # evaluate different ks
         for k_s in self.k_l:
             # run nested CV loops for different ks
-            non_nested_cv_df, nested_cv_df = self.nested_param_tuning_eval(self.param_grid, k_o=k_s, k_i = self.k_i, verbose=verbose)
+            non_nested_cv_df, nested_cv_df, scores_df = self.nested_param_tuning_eval(self.param_grid, k_o=k_s, k_i = self.k_i, verbose=verbose)
 
             # convert neg_meansquared error to mean_squared error in non-nested df
             non_nested_cv_df.mean_test_neg_MSE = non_nested_cv_df.mean_test_neg_MSE * -1
             non_nested_scores.append(np.mean(non_nested_cv_df.mean_test_neg_MSE))
             non_nested_mins.append(min(non_nested_cv_df.mean_test_neg_MSE))
             non_nested_maxs.append(max(non_nested_cv_df.mean_test_neg_MSE))
-            nested_scores.append(np.mean(nested_cv_df.MSE))
+            nested_scores.append(np.mean(nested_cv_df.mean_test_neg_MSE))
 
         print('Non-nested scores per k: {}'.format(non_nested_scores))
         print('Nested scores per k: {}'.format(nested_scores))
@@ -201,7 +229,7 @@ param_grid = {
 }
 model_name = "KernelRidge"
 reg = KernelRidge()
-k=5
+k_outer=5
 k_l = list(range(2,31,1))
 k_l.append(len(X_OH))
 metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
@@ -209,18 +237,24 @@ metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
 # #########################################################################################################
 # ###### EVALUATION OF Ks; NESTED CV #####
 # #########################################################################################################
-# k_l = [3,5]
-#
-# # define class model
-# kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
+
+# define class model
+kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
+
+
+######### DEBUG THAT FROM HERE ON WHERE THE 2 RED DOTS ARE; MORE VALUES RETURNED!
 # # evaluate k for CV
-# kernel.evaluate_k(param_grid, k_in=3, k_l=k_l, verbose=0)
-#
-# # run nested CV with set k values
-# non_nested_cv_df, nested_cv_df = kernel.nested_param_tuning_eval(param_grid, k_o=5, k_i=3, verbose=0)
-# # k_eval
-# # k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, k_l, model_name, save_fig = False)
-#
+kernel.evaluate_k(param_grid, k_in=3, k_l=k_l, verbose=0)
+
+# run nested CV with set k values
+non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5, verbose=1)
+# save scores dataframe
+scores_df.to_csv(os.path.join('/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation', model_name+'_CV_scores.csv'))
+
+
+# k_eval
+# k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, k_l, model_name, save_fig = False)
+
 # #########################################################################################################
 
 
