@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 from utils import GP_fcts as GP
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import KFold, GridSearchCV, cross_val_predict, cross_val_score
-from sklearn.metrics import mean_squared_error, r2_score, neg_mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 class regression_model_evaluation:
@@ -30,7 +30,7 @@ class regression_model_evaluation:
 
     def nested_param_tuning_eval(self, param_grid, k_o=10, k_i=5,
                                  verbose=0):
-
+        self.param_grid = param_grid
         # k_o = 16
         # k_i = 5
         # metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
@@ -110,6 +110,12 @@ class regression_model_evaluation:
         self.param_grid = param_grid
         if k_in != self.k_i:
             self.k_i = k_in
+
+        # initialize scores lists
+        non_nested_scores = []
+        nested_scores = []
+        non_nested_mins = []
+        non_nested_maxs = []
         # evaluate different ks
         for k_s in self.k_l:
             # run nested CV loops for different ks
@@ -128,7 +134,7 @@ class regression_model_evaluation:
         print('Mean nested scores over k: {}, std: {}'.format(np.mean(nested_scores), np.std(nested_scores)))
 
 
-def k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, k_l, model_name, save_fig=False):
+def k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, k_l, model_name, save_fig=False, save_path=False):
     # line plot of k mean values with min/max error bars
     plt.errorbar(np.array(k_l), np.array(non_nested_scores),
                  yerr=[np.array(non_nested_mins), np.array(non_nested_maxs)], fmt='o')
@@ -140,10 +146,14 @@ def k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scor
     plt.ylabel('MSE')
 
     if save_fig == True:
-        plt.savefig(fname=os.path.join(dir_out, 'k_sensitivity_nestedCV_%s.pdf' % model_name))
+        plt.savefig(fname=save_path)
     # show the plot
     plt.show()
     plt.close()
+
+
+
+
 
 
 ###### SET INPUT DIRECTORIES ######
@@ -194,16 +204,24 @@ reg = KernelRidge()
 k=5
 k_l = list(range(2,31,1))
 k_l.append(len(X_OH))
+metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
 
-non_nested_scores = []
-nested_scores = []
-non_nested_mins = []
-non_nested_maxs = []
-
-###### EVALUATION OF Ks; NESTED CV #####
-
-k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, k_l, model_name, save_fig = False)
-
+# #########################################################################################################
+# ###### EVALUATION OF Ks; NESTED CV #####
+# #########################################################################################################
+# k_l = [3,5]
+#
+# # define class model
+# kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
+# # evaluate k for CV
+# kernel.evaluate_k(param_grid, k_in=3, k_l=k_l, verbose=0)
+#
+# # run nested CV with set k values
+# non_nested_cv_df, nested_cv_df = kernel.nested_param_tuning_eval(param_grid, k_o=5, k_i=3, verbose=0)
+# # k_eval
+# # k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, k_l, model_name, save_fig = False)
+#
+# #########################################################################################################
 
 
 
@@ -211,7 +229,6 @@ k_eval_plot(non_nested_scores, non_nested_mins, non_nested_maxs, nested_scores, 
 ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
 ### LOO CV
 k=35
-metrics = ['neg_mean_squared_error']
 
 kf = KFold(n_splits=k, shuffle=True, random_state=1) # Define the n_split = number of folds
 
@@ -220,7 +237,7 @@ grid_search = GridSearchCV(estimator=reg,
                            param_grid=param_grid,
                            scoring= metrics,
                            cv=kf,
-                           refit=metrics[0])
+                           refit=list(metrics.keys())[0])
 
 # Non_nested parameter search and scoring
 grid_search.fit(X_OH, y)
@@ -235,34 +252,9 @@ y_pred = cross_val_predict(best_model, X_OH, y, cv=kf, verbose=1)
 
 r2, cor_coef, MSE= GP.calc_print_scores(y, y_pred, k)
 
-from utils import GP_fcts as GP
-
 GP.corr_var_plot(y, y_pred, vars=False, x_std=2, legend = True, method = "\n" + model_name + " regression",
-                  R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig = False, out_file=os.path.join(dir_out, 'KernelRidge_corr_plot.pdf'))
+                  R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig = True, out_file=os.path.join(dir_out, 'KernelRidge_corr_plot.pdf'))
 
-
-x_lim = [-2.5, 2.5]
-y_lim = [-2.5, 2.5]
-# plot
-plt.figure('GP', figsize=(5, 5))
-# set title and axis labels
-plt.ylim(ylim)
-plt.xlim(xlim)
-plt.title(str('Correlation of measured and predicted KD values'))
-plt.xlabel('measured')
-plt.ylabel('predicted')
-
-# add data points
-plt.scatter(y, y_pred, color='k')
-
-# add a diagonal and correlation line
-par = np.polyfit(y, y_pred, 1, full=True)
-slope = par[0][0]
-intercept = par[0][1]
-plt.plot(x_lim, [x_lim[0] * slope + intercept, x_lim[1] * slope + intercept], '-', color='k')
-# plt.plot(x_lim, y_lim, linestyle = '--',color='k')
-
-plt.show()
 
 
 ########################################################################
@@ -280,11 +272,6 @@ plt.show()
 ####################################
 # program as class!!
 ####################################
-k_l = [3,5]
-metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
-kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
-non_nested_cv_df, nested_cv_df = kernel.nested_param_tuning_eval(param_grid, k_o=5, k_i=3, verbose=0)
-kernel.evaluate_k(param_grid, k_in=3, k_l=k_l, verbose=0)
 
 
 def main():

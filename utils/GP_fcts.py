@@ -1122,10 +1122,7 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     :return: plot
     '''
 
-    # Correlation plot with filled areas as standard deviation
-    if vars != False:
-        std = x_std*np.sqrt(vars)
-
+    # Data prep
     y_pred = np.asarray(predicted)
     x = np.asarray(measured)
 
@@ -1133,34 +1130,38 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     par = np.polyfit(x, y_pred, 1, full=True)
     slope = par[0][0]
     intercept = par[0][1]
-
-    # y_values of the correlation line to add to the stds
-    y_corline = np.asarray([i * slope + intercept for i in x])
-    if vars != False:
-        std_pos = np.add(y_corline, np.abs(std))
-        std_neg = np.subtract(y_corline, np.abs(std))
-
-        # fit line to the stds and get y values of fit
-        l_pos = np.polyfit(x, std_pos, 2)
-        l_neg = np.polyfit(x, std_neg, 2)
-
     # set y and x axis
     x_lim = [-2.5, 2.5]
     y_lim = [-2.5, 2.5]
-    if vars != False:
-        # get x and y values
-        x_var = np.append(x, x_lim[1])
-        x_var = np.insert(x_var, 0, x_lim[0])
-        l_pos_y = x_var ** 2 * l_pos[0] + x_var * l_pos[1] + l_pos[2]
-        l_neg_y = x_var ** 2 * l_neg[0] + x_var * l_neg[1] + l_neg[2]
 
-        # combine values in dataframe to sort according to x
-        var_df = pd.DataFrame()
-        var_df['x_var'] = np.asarray(x_var)
-        var_df['std_positive'] = np.asarray(l_pos_y)
-        var_df['std_negative'] = np.asarray(l_neg_y)
-        var_df.sort_values('x_var', inplace=True)
+    ###### setup filled areas as standard deviation
+    #if vars != False:
+    std = x_std*np.sqrt(vars)
+    # y_values of the correlation line to add to the stds
+    y_corline = np.asarray([i * slope + intercept for i in x])
 
+    std_pos = np.add(y_corline, np.abs(std))
+    std_neg = np.subtract(y_corline, np.abs(std))
+
+    # fit line to the stds and get y values of fit
+    l_pos = np.polyfit(x, std_pos, 2)
+    l_neg = np.polyfit(x, std_neg, 2)
+
+    # get x and y values
+    x_var = np.append(x, x_lim[1])
+    x_var = np.insert(x_var, 0, x_lim[0])
+    l_pos_y = x_var ** 2 * l_pos[0] + x_var * l_pos[1] + l_pos[2]
+    l_neg_y = x_var ** 2 * l_neg[0] + x_var * l_neg[1] + l_neg[2]
+
+    # combine values in dataframe to sort according to x
+    var_df = pd.DataFrame()
+    var_df['x_var'] = np.asarray(x_var)
+    var_df['std_positive'] = np.asarray(l_pos_y)
+    var_df['std_negative'] = np.asarray(l_neg_y)
+    var_df.sort_values('x_var', inplace=True)
+
+
+    ###### Start plot
     # plot
     plt.figure('GP', figsize=(5, 5))
     # set title and axis labels
@@ -1177,12 +1178,17 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     plt.plot(x_lim, [x_lim[0] * slope + intercept, x_lim[1] * slope + intercept], '-', color='k')
     # plt.plot(x_lim, y_lim, linestyle = '--',color='k')
 
-    if vars != False:
-        plt.scatter(x, std_pos, color='b', s=4)
-        plt.scatter(x, std_neg, color='b', s=4)
-        plt.fill_between(var_df['x_var'], var_df['std_positive'], var_df['std_negative'],
-                         interpolate=True, alpha=0.3, color='orange')
-    # define legend
+    if vars == False:
+        alpha = 0
+    else:
+        alpha = 1
+
+    plt.scatter(x, std_pos, color='b', alpha=alpha, s=4)
+    plt.scatter(x, std_neg, color='b', alpha=alpha, s=4)
+    plt.fill_between(var_df['x_var'], var_df['std_positive'], var_df['std_negative'],
+                     interpolate=True, alpha=0.3, color='orange')
+
+    # define legend - note: can only plot 4 values (defined by the # of values plotted)
     if legend == True:
         l0 = "slope = {:.4f}".format(slope)
         l1 = "R2 = {:.4f}".format(R2)
@@ -1198,6 +1204,7 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
         plt.savefig(fname=out_file)
 
     plt.show()
+    plt.close()
 
 
 def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
