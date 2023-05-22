@@ -14,6 +14,8 @@ from utils import GP_fcts as GP
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import KFold, GridSearchCV, cross_val_predict
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.gaussian_process.kernels import Matern, RBF
+from sklearn.gaussian_process import GaussianProcessRegressor
 
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
@@ -180,7 +182,7 @@ class regression_model_evaluation:
             print('K value: %d' % (k_o))
             print('non-Nested CV best mse score: %0.3f' % grid_search_nn.best_score_)
             print('non-Nested CV best params: %s' % best_params_nn)
-            print('non-Nested CV best r2 score: %0.3f' % np.unique(grid_search_nn.cv_results_[second_score][grid_search_nn.cv_results_[best_score_n] == -1*b_score_nn]))
+            print('non-Nested CV best r2 score: %0.3f' % np.unique(grid_search_nn.cv_results_[second_score][grid_search_nn.cv_results_[best_score_n] == -1*b_score_nn])[0])
             print('----------------')
 
 
@@ -237,7 +239,8 @@ class regression_model_evaluation:
         scores_df["k_outer"] = pd.Series(k_o)
         scores_df["k_inner"] = pd.Series(k_i)
         nested_cv_df.best_params = nested_cv_df.best_params.astype("string")
-        scores_df["mostselected_params_nested"] = nested_cv_df.best_params[max(nested_cv_df.best_params.value_counts())]
+        #nested_cv_df.best_params[np.argmax(nested_cv_df.best_params.value_counts())]
+        scores_df["mostselected_params_nested"] = nested_cv_df.best_params[np.argmax(nested_cv_df.best_params.value_counts())]
 
         return non_nested_cv_df, nested_cv_df, scores_df
 
@@ -390,20 +393,54 @@ class regression_model_evaluation:
 # k_l = list(range(2,len(X_OH),1))
 # k_l.append(len(X_OH))
 # metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
-from sklearn.gaussian_process.kernels import Matern, RBF
-from sklearn.gaussian_process import GaussianProcessRegressor
-model_name = "GaussianProcessRegressor"
-# parameter grid
-param_grid = {
-    'kernel': [None, Matern(), RBF()],
-    'n_restarts_optimizer': [1, 3],
-    'alpha': [1e-10, 0.1]
-}
-reg = GaussianProcessRegressor(random_state=1)
-k_outer=5
-k_l = list(range(2,len(X_OH),1))
-k_l.append(len(X_OH))
-metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
+
+
+# model_name = "GaussianProcess_RBF"
+# # parameter grid
+# param_grid = {
+#     'kernel': [None, RBF()],
+#     'n_restarts_optimizer': [1, 3],
+#     'alpha': [1e-10, 0.1]
+# }
+# reg = GaussianProcessRegressor(random_state=1)
+# k_outer=5
+# k_l = list(range(2,len(X_OH),1))
+# k_l.append(len(X_OH))
+# metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
+
+# model_name = "GaussianProcess_Matern"
+# # parameter grid
+# param_grid = {
+#     'kernel': [None, Matern()],
+#     'n_restarts_optimizer': [1, 3],
+#     'alpha': [1e-10, 0.1]
+# }
+# reg = GaussianProcessRegressor(random_state=1)
+
+
+model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern", "KernelRidge", "RandomForestRegression", "OrdinalLinearRegression"]
+param_list = [{'kernel': [None, RBF()],
+               'n_restarts_optimizer': [1, 3],
+               'alpha': [1e-10, 0.1]},
+              {'kernel': [None, Matern()],
+               'n_restarts_optimizer': [1, 3],
+               'alpha': [1e-10, 0.1]},
+              {'alpha': [0.1, 1.0, 10.0],
+               'kernel': ['linear', 'rbf', 'polynomial'],
+               'degree': [2, 3, 4],
+               'gamma': [0.1, 1.0, 10.0]},
+              {'n_estimators': [10, 100, 200],
+               'max_depth': [2, 5, 10]},
+              {'fit_intercept': [True, False]}
+              ]
+
+model_list = [GaussianProcessRegressor(random_state=1),
+              GaussianProcessRegressor(random_state=1),
+              KernelRidge(),
+              RandomForestRegressor(random_state=1),
+              LinearRegression()
+              ]
+
 
 
 
@@ -412,13 +449,13 @@ input_dir = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/
 input_f_seq = os.path.join(input_dir, 'input_HCs.csv')
 
 
-## SET OUTPUT DIRECTORIES (for plots to save)
-dir_out = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/'+model_name
-dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation'
+# ## SET OUTPUT DIRECTORIES (for plots to save)
+# dir_out = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/'+model_name
+# dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation'
 
-# If the output directories do not exist, then create it
-if not os.path.exists(dir_out):
-    os.makedirs(dir_out)
+# # If the output directories do not exist, then create it
+# if not os.path.exists(dir_out):
+#     os.makedirs(dir_out)
 
 
 ###### LOAD DATA #######
@@ -442,25 +479,46 @@ X_OH = GP.one_hot_encode_matern(X)
 # #########################################################################################################
 # ###### EVALUATION OF Ks; NESTED CV #####
 # #########################################################################################################
+k_outer=5
+k_l = list(range(2,len(X_OH),1))
+k_l.append(len(X_OH))
+metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
 
-# define class model
-kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
+for i, model_name in enumerate(model_names):
+    print(model_name)
+    print(model_list[i])
+    param_grid = param_list[i]
+    reg = model_list[i]
 
-# # evaluate k for CV
-kernel.evaluate_k(param_grid, k_in=3, k_l=k_l, plot = True, save_fig=True,
-                  save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=1)
+    ## SET OUTPUT DIRECTORIES (for plots to save)
+    dir_out = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/' + model_name
+    dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation'
+    if not os.path.exists(dir_out):
+        os.makedirs(dir_out)
 
-# run nested CV with set k values
-non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5, verbose=1)
-# save scores dataframe
-scores_df.to_csv(os.path.join(dir_out_eval, model_name+'_CV_scores.csv'))
+    # define class model
+    kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
 
-###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
-### LOO CV
-model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True,
-                                         save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
-model_score_df.to_csv(os.path.join(dir_out_eval, model_name+'_tuned_LOOCV_scores.csv'))
-##########################################################################################################
+    # # evaluate k for CV
+    kernel.evaluate_k(param_grid, k_in=5, k_l=k_l, plot = True, save_fig=True,
+                      save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=0)
+
+    # run nested CV with set k values
+    non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5, verbose=0)
+    # save scores dataframe
+    scores_df.to_csv(os.path.join(dir_out_eval, model_name+'_CV_scores.csv'))
+
+    ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
+    ### LOO CV
+    model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True,
+                                             save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
+    model_score_df.to_csv(os.path.join(dir_out_eval, model_name+'_tuned_LOOCV_scores.csv'))
+    ##########################################################################################################
+    print("DONE with "+model_name)
+    print("--------------------------------------------------------")
+    print("---------------------++++++++++++-----------------------")
+
+
 
 
 def main():
