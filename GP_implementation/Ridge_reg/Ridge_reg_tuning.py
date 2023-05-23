@@ -20,6 +20,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
+
+
 def k_eval_plot(non_nested_scores: list, non_nested_mins: list, non_nested_maxs: list,
                 nested_scores: list, k_l: list, model_name: str, save_fig: list=False, save_path=False):
     """ Plot of CV scores (nested/non-nested) across choice of k
@@ -105,6 +107,8 @@ class regression_model_evaluation:
         self.param_grid = None
         self.k_i = 3
         self.k_eval_plot = None
+        self.y_pred = None
+        self.vars = None
 
 
     def nested_param_tuning_eval(self, param_grid: dict, k_o: int =10, k_i: int =5,
@@ -318,7 +322,7 @@ class regression_model_evaluation:
             self.k_eval_plot.show()
             self.k_eval_plot.close()
 
-    def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, save_fig: bool=False, save_path=None):
+    def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, save_fig: bool=False, w_vars = False, save_path=None):
 
         kf = KFold(n_splits=k, shuffle=True, random_state=1)  # Define the n_split = number of folds
 
@@ -337,191 +341,144 @@ class regression_model_evaluation:
         print('Best score: ', best_score)
 
         # Obtain the predicted values using cross-validation
-        y_pred = cross_val_predict(best_model, self.X_OH, self.y, cv=kf, verbose=1)
+        self.y_pred = cross_val_predict(best_model, self.X_OH, self.y, cv=kf, verbose=1)
+        if w_vars == True:
+            # compute std separately
+            self.vars = np.empty_like(self.y_pred)
+            for i, (train_index, test_index) in enumerate(kf.split(self.X_OH)):
+                best_model.fit(self.X_OH[train_index], self.y[train_index])
+                _, self.vars[test_index] = best_model.predict(self.X_OH[test_index], return_std=True)
 
-        r2, cor_coef, MSE = GP.calc_print_scores(self.y, y_pred, k)
+        elif w_vars == False:
+            self.vars = False
+
+
+        r2, cor_coef, MSE = GP.calc_print_scores(self.y, self.y_pred, k)
 
         # plot the results
         if plot == True:
-            GP.corr_var_plot(self.y, y_pred, vars=False, x_std=2, legend=True, method="\n" + model_name + " regression",
-                             R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig=save_fig,
-                             out_file=save_path)
+            GP.corr_var_plot(self.y, self.y_pred, vars=self.vars, x_std=2, legend=True, method="\n" + self.model_name + " regression",
+                             R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig=save_fig, out_file=save_path)
 
         # summarize in df
-        model_score_df = pd.DataFrame(data = {'Model': [model_name], 'R2': [r2], 'Corr_coef': [cor_coef], 'MSE': [MSE], 'params': [str(best_model)]}, index=[0])
+        model_score_df = pd.DataFrame(data = {'Model': [self.model_name], 'R2': [r2], 'Corr_coef': [cor_coef], 'MSE': [MSE], 'params': [str(best_model)]}, index=[0])
 
         return model_score_df
 
-# #########################################################################################################
-# ###### SET MODEL AND PARAMETERS #####
-# #########################################################################################################
-# model_name = "KernelRidge"
-# parameter grid
-# param_grid = {
-#     'alpha': [0.1, 1.0, 10.0],
-#     'kernel': ['linear', 'rbf', 'polynomial'],
-#     'degree': [2, 3, 4],
-#     'gamma': [0.1, 1.0, 10.0]
-# }
-# reg = KernelRidge()
-# k_outer=5
-# k_l = list(range(2,len(X_OH),1))
-# k_l.append(len(X_OH))
-# metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
-
-
-# model_name = "OrdinalLinearRegression"
-# # parameter grid
-# param_grid = {
-#     'fit_intercept': [True, False],
-# }
-# reg = LinearRegression()
-# k_outer=5
-# k_l = list(range(2,len(X_OH),1))
-# k_l.append(len(X_OH))
-# metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
-
-
-# model_name = "RandomForestRegression"
-# # parameter grid
-# param_grid = {
-#     'n_estimators': [10, 100, 200],
-#     'max_depth': [2, 5, 10]
-# }
-# reg = RandomForestRegressor(random_state=1)
-# k_outer=5
-# k_l = list(range(2,len(X_OH),1))
-# k_l.append(len(X_OH))
-# metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
-
-
-# model_name = "GaussianProcess_RBF"
-# # parameter grid
-# param_grid = {
-#     'kernel': [None, RBF()],
-#     'n_restarts_optimizer': [1, 3],
-#     'alpha': [1e-10, 0.1]
-# }
-# reg = GaussianProcessRegressor(random_state=1)
-# k_outer=5
-# k_l = list(range(2,len(X_OH),1))
-# k_l.append(len(X_OH))
-# metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
-
-# model_name = "GaussianProcess_Matern"
-# # parameter grid
-# param_grid = {
-#     'kernel': [None, Matern()],
-#     'n_restarts_optimizer': [1, 3],
-#     'alpha': [1e-10, 0.1]
-# }
-# reg = GaussianProcessRegressor(random_state=1)
-
-
-model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern", "KernelRidge", "RandomForestRegression", "OrdinalLinearRegression"]
-param_list = [{'kernel': [None, RBF()],
-               'n_restarts_optimizer': [1, 3],
-               'alpha': [1e-10, 0.1]},
-              {'kernel': [None, Matern()],
-               'n_restarts_optimizer': [1, 3],
-               'alpha': [1e-10, 0.1]},
-              {'alpha': [0.1, 1.0, 10.0],
-               'kernel': ['linear', 'rbf', 'polynomial'],
-               'degree': [2, 3, 4],
-               'gamma': [0.1, 1.0, 10.0]},
-              {'n_estimators': [10, 100, 200],
-               'max_depth': [2, 5, 10]},
-              {'fit_intercept': [True, False]}
-              ]
-
-model_list = [GaussianProcessRegressor(random_state=1),
-              GaussianProcessRegressor(random_state=1),
-              KernelRidge(),
-              RandomForestRegressor(random_state=1),
-              LinearRegression()
-              ]
 
 
 
+def run():
+    # #########################################################################################################
+    # ###### SET MODEL AND PARAMETERS #####
+    randomized = True # set true to run the models with randomized labels for evaluation
+    # model names for saving files etc.
+    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
+                   "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"]
+    # list of parameters to test per model (take care of order!)
+    param_list = [{'kernel': [None, RBF()],
+                   'alpha': [1e-10, 0.1]},
+                  {'kernel': [None, Matern()],
+                   'alpha': [1e-10, 0.1]},
+                  {'alpha': [0.1, 1.0, 10.0],
+                   'kernel': ['linear', 'rbf', 'polynomial'],
+                   'degree': [2, 3, 4],
+                   'gamma': [0.1, 1.0, 10.0]},
+                  {'n_estimators': [10, 100, 200],
+                   'max_depth': [2, 5, 10]},
+                  {'fit_intercept': [True, False]}
+                  ]
+    # set True for GPs, False for other models; (again order!)
+    vars_list = [True, True, False, False, False]
 
-###### SET INPUT DIRECTORIES ######
-input_dir = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/input'
-input_f_seq = os.path.join(input_dir, 'input_HCs.csv')
+    model_list = [GaussianProcessRegressor(random_state=1),
+                  GaussianProcessRegressor(random_state=1),
+                  KernelRidge(),
+                  RandomForestRegressor(random_state=1),
+                  LinearRegression()
+                  ]
+    # define the metrics to be used; so far it only works with 2 max, and the first one will be the one the model will
+    # be optimized for
+    metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
+
+    if randomized is True:
+        model_names = [n+'_randomized' for n in model_names]
+
+    ###### SET INPUT DIRECTORIES ######
+    input_dir = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/input'
+    input_f_seq = os.path.join(input_dir, 'input_HCs.csv')
 
 
-# ## SET OUTPUT DIRECTORIES (for plots to save)
-# dir_out = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/'+model_name
-# dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation'
-
-# # If the output directories do not exist, then create it
-# if not os.path.exists(dir_out):
-#     os.makedirs(dir_out)
+    ###### LOAD DATA #######
+    data = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence', 'KD'])
 
 
-###### LOAD DATA #######
-data = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence', 'KD'])
+    #### DATA PROCESSING ####
+    # normalize data
+    data['KD_norm'] = GP.normalize_test_train_set(data['KD'])
 
+    X = data['Sequence'].values
+    y = data['KD_norm'].values
+    # random labels
+    if randomized is True:
+        y = data['KD_norm'].sample(frac=1).reset_index(drop = True).values
 
-#### DATA PROCESSING ####
-# normalize data
-data['KD_norm'] = GP.normalize_test_train_set(data['KD'])
+    # one-hot encoding
+    X_OH = GP.one_hot_encode_matern(X)
 
-X = data['Sequence'].values
-y = data['KD_norm'].values
-# random labels
-y_rand = data['KD_norm'].sample(frac=1).reset_index(drop = True).values
+    k_outer=5
+    k_l = list(range(2,len(X_OH),1))
+    k_l.append(len(X_OH))
 
-# one-hot encoding
-X_OH = GP.one_hot_encode_matern(X)
+    # #########################################################################################################
+    # ###### EVALUATION OF Ks; NESTED CV #####
+    # #########################################################################################################
+    for i, model_name in enumerate(model_names):
+        print()
+        print('Start model evaluation: '+ model_name)
+        param_grid = param_list[i]
+        reg = model_list[i]
+        w_vars = vars_list[i]
 
+        ## SET OUTPUT DIRECTORIES (for plots to save)
+        dir_out = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/' + model_name
+        dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation'
+        if not os.path.exists(dir_out):
+            os.makedirs(dir_out)
 
+        # define class model
+        kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
 
-# #########################################################################################################
-# ###### EVALUATION OF Ks; NESTED CV #####
-# #########################################################################################################
-k_outer=5
-k_l = list(range(2,len(X_OH),1))
-k_l.append(len(X_OH))
-metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
+        # evaluate k for CV
+        print('Evaluate k')
+        kernel.evaluate_k(param_grid, k_in=5, k_l=k_l, plot = True, save_fig=True,
+                          save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=0)
 
-for i, model_name in enumerate(model_names):
-    print(model_name)
-    print(model_list[i])
-    param_grid = param_list[i]
-    reg = model_list[i]
+        # run nested CV with set k values
+        print('\nPerform nested CV')
+        non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5,
+                                                                                    verbose=0)
+        # save scores dataframe
+        scores_df.to_csv(os.path.join(dir_out_eval, model_name+'_CV_scores.csv'))
 
-    ## SET OUTPUT DIRECTORIES (for plots to save)
-    dir_out = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/' + model_name
-    dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation'
-    if not os.path.exists(dir_out):
-        os.makedirs(dir_out)
+        ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
+        ### LOO CV
+        print('\nPerform LOO-CV and make correlation plot')
+        model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, w_vars = w_vars,
+                                                 save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
+        model_score_df.to_csv(os.path.join(dir_out_eval, model_name+'_tuned_LOOCV_scores.csv'))
+        ##########################################################################################################
+        print("--------------------------------------------------------")
+        print("DONE with " + model_name)
+        print("---------------------++++++++++++-----------------------")
 
-    # define class model
-    kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
-
-    # # evaluate k for CV
-    kernel.evaluate_k(param_grid, k_in=5, k_l=k_l, plot = True, save_fig=True,
-                      save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=0)
-
-    # run nested CV with set k values
-    non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5, verbose=0)
-    # save scores dataframe
-    scores_df.to_csv(os.path.join(dir_out_eval, model_name+'_CV_scores.csv'))
-
-    ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
-    ### LOO CV
-    model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True,
-                                             save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
-    model_score_df.to_csv(os.path.join(dir_out_eval, model_name+'_tuned_LOOCV_scores.csv'))
-    ##########################################################################################################
-    print("DONE with "+model_name)
-    print("--------------------------------------------------------")
-    print("---------------------++++++++++++-----------------------")
 
 
 
 
 def main():
+    run()
+
 
 
 

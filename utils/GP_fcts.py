@@ -1178,7 +1178,7 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     plt.plot(x_lim, [x_lim[0] * slope + intercept, x_lim[1] * slope + intercept], '-', color='k')
     # plt.plot(x_lim, y_lim, linestyle = '--',color='k')
 
-    if vars == False:
+    if vars is False:
         alpha = 0
     else:
         alpha = 1
