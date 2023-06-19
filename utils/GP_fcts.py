@@ -1109,7 +1109,8 @@ def correlation_plot(measured, predicted, cor_line = True, x_lim = 2.5, y_lim = 
 
 
 def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, method = None,
-                  R2=None, corr_coef=None, MSE=None, save_fig = False, out_file=None):
+                  R2=None, corr_coef=None, MSE=None, x_lim = [-2.5, 2.5], y_lim = [-2.5, 2.5],
+                  save_fig = False, out_file=None):
     '''
     Correlation plot with filled areas of standard deviation
     (2nd order polynomial is fitted to the stdevs)
@@ -1131,8 +1132,8 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     slope = par[0][0]
     intercept = par[0][1]
     # set y and x axis
-    x_lim = [-2.5, 2.5]
-    y_lim = [-2.5, 2.5]
+    x_lim = x_lim
+    y_lim = y_lim
 
     ###### setup filled areas as standard deviation
     #if vars != False:

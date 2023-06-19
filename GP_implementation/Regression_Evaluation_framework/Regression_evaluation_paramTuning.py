@@ -16,7 +16,8 @@ from sklearn.model_selection import KFold, GridSearchCV, cross_val_predict
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.gaussian_process.kernels import Matern, RBF
 from sklearn.gaussian_process import GaussianProcessRegressor
-
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
@@ -109,6 +110,7 @@ class regression_model_evaluation:
         self.k_eval_plot = None
         self.y_pred = None
         self.vars = None
+        self.scaler = StandardScaler()
 
 
     def nested_param_tuning_eval(self, param_grid: dict, k_o: int =10, k_i: int =5,
@@ -151,8 +153,12 @@ class regression_model_evaluation:
         kf_o = KFold(n_splits=k_o, shuffle=True, random_state=1)  # Define the n_split = number of folds
         kf_i = KFold(n_splits=k_i, shuffle=True, random_state=2)  # Define the n_split = number of folds
 
+        pipeline = Pipeline([
+            ('scaler', self.scaler),
+            ('regressor', self.reg)
+        ])
         # Define the grid search object - non-nested
-        grid_search_nn = GridSearchCV(estimator=self.reg,
+        grid_search_nn = GridSearchCV(estimator=pipeline,  ######## ADJUSTED FOR PIPELINE
                                       param_grid=param_grid,
                                       scoring=self.metrics,
                                       cv=kf_o,
@@ -196,7 +202,7 @@ class regression_model_evaluation:
         best_params = []
 
         # Define the grid search object - non-nested
-        grid_search = GridSearchCV(estimator=self.reg,
+        grid_search = GridSearchCV(estimator=pipeline,
                                    param_grid=param_grid,
                                    scoring=self.metrics,
                                    cv=kf_i,
@@ -322,12 +328,18 @@ class regression_model_evaluation:
             self.k_eval_plot.show()
             self.k_eval_plot.close()
 
-    def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, save_fig: bool=False, w_vars = False, save_path=None):
+    def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, x_lim=[-0.2,2.5], y_lim=[-0.2,2.5],
+                      save_fig: bool=False, w_vars = False, save_path=None):
 
         kf = KFold(n_splits=k, shuffle=True, random_state=1)  # Define the n_split = number of folds
 
+        pipeline = Pipeline([
+            ('scaler', self.scaler),
+            ('regressor', self.reg)
+        ])
+
         # Define the grid search object - non-nested
-        grid_search = GridSearchCV(estimator=self.reg,
+        grid_search = GridSearchCV(estimator= pipeline,
                                    param_grid=param_grid,
                                    scoring=self.metrics,
                                    cv=kf,
@@ -342,6 +354,7 @@ class regression_model_evaluation:
 
         # Obtain the predicted values using cross-validation
         self.y_pred = cross_val_predict(best_model, self.X_OH, self.y, cv=kf, verbose=1)
+
         if w_vars == True:
             # compute std separately
             self.vars = np.empty_like(self.y_pred)
@@ -357,7 +370,8 @@ class regression_model_evaluation:
 
         # plot the results
         if plot == True:
-            GP.corr_var_plot(self.y, self.y_pred, vars=self.vars, x_std=2, legend=True, method="\n" + self.model_name + " regression",
+            GP.corr_var_plot(self.y.reshape(len(self.y), ), self.y_pred.reshape(len(self.y_pred), ), vars=self.vars, x_std=2,
+                             legend=True, method="\n" + self.model_name + " regression", x_lim=x_lim, y_lim=y_lim,
                              R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig=save_fig, out_file=save_path)
 
         # summarize in df
@@ -371,22 +385,22 @@ class regression_model_evaluation:
 def run():
     # #########################################################################################################
     # ###### SET MODEL AND PARAMETERS #####
-    randomized = True # set true to run the models with randomized labels for evaluation
+    randomized = False # set true to run the models with randomized labels for evaluation
     # model names for saving files etc.
     model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
                    "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"]
     # list of parameters to test per model (take care of order!)
-    param_list = [{'kernel': [None, RBF()],
-                   'alpha': [1e-10, 0.1]},
-                  {'kernel': [None, Matern()],
-                   'alpha': [1e-10, 0.1]},
-                  {'alpha': [0.1, 1.0, 10.0],
-                   'kernel': ['linear', 'rbf', 'polynomial'],
-                   'degree': [2, 3, 4],
-                   'gamma': [0.1, 1.0, 10.0]},
-                  {'n_estimators': [10, 100, 200],
-                   'max_depth': [2, 5, 10]},
-                  {'fit_intercept': [True, False]}
+    param_list = [{'regressor__kernel': [None, RBF()],
+                   'regressor__alpha': [1e-10, 0.1]},
+                  {'regressor__kernel': [None, Matern()],
+                   'regressor__alpha': [1e-10, 0.1]},
+                  {'regressor__alpha': [0.1, 1.0, 10.0],
+                   'regressor__kernel': ['linear', 'rbf', 'polynomial'],
+                   'regressor__degree': [2, 3, 4],
+                   'regressor__gamma': [0.1, 1.0, 10.0]},
+                  {'regressor__n_estimators': [10, 100, 200],
+                   'regressor__max_depth': [2, 5, 10]},
+                  {'regressor__fit_intercept': [True, False]}
                   ]
     # set True for GPs, False for other models; (again order!)
     vars_list = [True, True, False, False, False]
@@ -414,11 +428,16 @@ def run():
 
 
     #### DATA PROCESSING ####
-    # normalize data
-    data['KD_norm'] = GP.normalize_test_train_set(data['KD'])
+    # # normalize data -
+    # data['KD_norm'] = GP.normalize_test_train_set(data['KD'])
+    #
+    # X = data['Sequence'].values
+    # y = data['KD_norm'].values
 
+    # normalize data - TEST WITH SCALER
     X = data['Sequence'].values
-    y = data['KD_norm'].values
+    y = data['KD'].values
+
     # random labels
     if randomized is True:
         y = data['KD_norm'].sample(frac=1).reset_index(drop = True).values
@@ -449,23 +468,24 @@ def run():
         # define class model
         kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
 
-        # evaluate k for CV
+        ### EVALUATE Ks FOR CV
         print('Evaluate k')
         kernel.evaluate_k(param_grid, k_in=5, k_l=k_l, plot = True, save_fig=True,
-                          save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=0)
+                          save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=1)
 
-        # run nested CV with set k values
+        ### MODEL EVALUATION WITH NESTED CV (set k values)
         print('\nPerform nested CV')
         non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5,
-                                                                                    verbose=0)
+                                                                                    verbose=1)
         # save scores dataframe
         scores_df.to_csv(os.path.join(dir_out_eval, model_name+'_CV_scores.csv'))
 
         ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
         ### LOO CV
         print('\nPerform LOO-CV and make correlation plot')
-        model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, w_vars = w_vars,
-                                                 save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
+        model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, x_lim=[-0.5,3],
+                                              y_lim=[-0.5,3], w_vars = w_vars,
+                                              save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
         model_score_df.to_csv(os.path.join(dir_out_eval, model_name+'_tuned_LOOCV_scores.csv'))
         ##########################################################################################################
         print("--------------------------------------------------------")
