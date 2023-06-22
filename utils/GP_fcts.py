@@ -1124,8 +1124,8 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     '''
 
     # Data prep
-    y_pred = np.asarray(predicted)
-    x = np.asarray(measured)
+    y_pred = np.asarray(predicted).reshape(-1,)
+    x = np.asarray(measured).reshape(-1,)
 
     # correlation line for the plot
     par = np.polyfit(x, y_pred, 1, full=True)
@@ -1136,34 +1136,33 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     y_lim = y_lim
 
     ###### setup filled areas as standard deviation
-    #if vars != False:
-    std = x_std*np.sqrt(vars)
-    # y_values of the correlation line to add to the stds
-    y_corline = np.asarray([i * slope + intercept for i in x])
+    if vars is not False:
+        std = x_std*np.sqrt(vars)
+        # y_values of the correlation line to add to the stds
+        y_corline = np.asarray([i * slope + intercept for i in x])
 
-    std_pos = np.add(y_corline, np.abs(std))
-    std_neg = np.subtract(y_corline, np.abs(std))
+        std_pos = np.add(y_corline, np.abs(std))
+        std_neg = np.subtract(y_corline, np.abs(std))
 
-    # fit line to the stds and get y values of fit
-    l_pos = np.polyfit(x, std_pos, 2)
-    l_neg = np.polyfit(x, std_neg, 2)
+        # fit line to the stds and get y values of fit
+        l_pos = np.polyfit(x, std_pos, 2)
+        l_neg = np.polyfit(x, std_neg, 2)
 
-    # get x and y values
-    x_var = np.append(x, x_lim[1])
-    x_var = np.insert(x_var, 0, x_lim[0])
-    l_pos_y = x_var ** 2 * l_pos[0] + x_var * l_pos[1] + l_pos[2]
-    l_neg_y = x_var ** 2 * l_neg[0] + x_var * l_neg[1] + l_neg[2]
+        # get x and y values
+        x_var = np.append(x, x_lim[1])
+        x_var = np.insert(x_var, 0, x_lim[0])
+        l_pos_y = x_var ** 2 * l_pos[0] + x_var * l_pos[1] + l_pos[2]
+        l_neg_y = x_var ** 2 * l_neg[0] + x_var * l_neg[1] + l_neg[2]
 
-    # combine values in dataframe to sort according to x
-    var_df = pd.DataFrame()
-    var_df['x_var'] = np.asarray(x_var)
-    var_df['std_positive'] = np.asarray(l_pos_y)
-    var_df['std_negative'] = np.asarray(l_neg_y)
-    var_df.sort_values('x_var', inplace=True)
+        # combine values in dataframe to sort according to x
+        var_df = pd.DataFrame()
+        var_df['x_var'] = np.asarray(x_var)
+        var_df['std_positive'] = np.asarray(l_pos_y)
+        var_df['std_negative'] = np.asarray(l_neg_y)
+        var_df.sort_values('x_var', inplace=True)
 
 
     ###### Start plot
-    # plot
     plt.figure('GP', figsize=(5, 5))
     # set title and axis labels
     plt.ylim(y_lim)
@@ -1177,17 +1176,18 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
 
     # add a diagonal and correlation line
     plt.plot(x_lim, [x_lim[0] * slope + intercept, x_lim[1] * slope + intercept], '-', color='k')
-    # plt.plot(x_lim, y_lim, linestyle = '--',color='k')
 
+    # make points invisible
     if vars is False:
         alpha = 0
     else:
         alpha = 1
 
-    plt.scatter(x, std_pos, color='b', alpha=alpha, s=4)
-    plt.scatter(x, std_neg, color='b', alpha=alpha, s=4)
-    plt.fill_between(var_df['x_var'], var_df['std_positive'], var_df['std_negative'],
-                     interpolate=True, alpha=0.3, color='orange')
+    if vars is not False:
+        plt.scatter(x, std_pos, color='b', alpha=alpha, s=4)
+        plt.scatter(x, std_neg, color='b', alpha=alpha, s=4)
+        plt.fill_between(var_df['x_var'], var_df['std_positive'], var_df['std_negative'],
+                         interpolate=True, alpha=0.3, color='orange')
 
     # define legend - note: can only plot 4 values (defined by the # of values plotted)
     if legend == True:
@@ -1207,26 +1207,26 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     plt.show()
     plt.close()
 
-
-def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
-                            measured_test, predicted_test, var_test, legend=False,
-                            R2=None, cor_coef=None, MSE=None, save_fig = False, out_file=None):
+# plot not optimized for models without vars
+def corr_var_plot_highlighted(measured_train, predicted_train, stdev_train,
+                              measured_test, predicted_test, stdev_test, legend=False, x_std=1,
+                              R2=None, cor_coef=None, MSE=None,x_lim = [-2.5, 2.5], y_lim = [-2.5, 2.5],
+                              save_fig = False, out_file=None):
 
     # plot with highligted data points
     # set values
-    x_test = measured_test
-    x_train = measured_train
+    x_test = np.asarray(measured_test).reshape(-1,)
+    x_train = np.asarray(measured_train).reshape(-1,)
 
-    y_pred_test = predicted_test
-    y_pred_train = predicted_train
-
-    std_test = 2*np.sqrt(var_test)
-    std_train = 2*np.sqrt(var_train)
+    y_pred_test = np.asarray(predicted_test).reshape(-1,)
+    y_pred_train = np.asarray(predicted_train).reshape(-1,)
 
     x = np.concatenate((x_train, x_test))
     y_pred = np.concatenate((y_pred_train, y_pred_test))
-    std = np.concatenate((std_train, std_test))
 
+    std_test = x_std * np.asarray(stdev_test).reshape(-1, )
+    std_train = x_std * np.asarray(stdev_train).reshape(-1, )
+    std = np.concatenate((std_train, std_test))
 
     # correlation line for all values
     par = np.polyfit(x, y_pred, 1, full=True)
@@ -1242,8 +1242,8 @@ def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
     l_pos = np.polyfit(x, std_pos, 2)
     l_neg = np.polyfit(x, std_neg, 2)
     # set y and x axis
-    x_lim = [-2.5, 2.5]
-    y_lim = [-2.5, 2.5]
+    x_lim = x_lim
+    y_lim = y_lim
     # get x and y values
     x_area = np.append(x, x_lim[1])
     x_area = np.insert(x_area, 0, x_lim[0])
@@ -1257,6 +1257,7 @@ def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
     var_df['std_negative'] = l_neg_y
     var_df.sort_values('x_area', inplace=True)
 
+
     plt.figure('GP testset evaluation', figsize=(5, 5))
 
     plt.title('Correlation of measured and predicted KD values')
@@ -1265,6 +1266,7 @@ def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
     # set y and x axis
     plt.ylim(y_lim)
     plt.xlim(x_lim)
+
     plt.fill_between(var_df['x_area'], var_df['std_positive'], var_df['std_negative'],
                      alpha = 0.3 , interpolate=True, color = 'orange')
 
@@ -1295,76 +1297,92 @@ def corr_var_plot_highlighted(measured_train, predicted_train, var_train,
 
     plt.show()
 
+# additional correlation plot for highlighting categories of test set (differently designed variants)
+# plot not optimized for models without vars
+def corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dict, y_pred_test_set_dict, y_std_test_set_dict,
+                                       x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a'],
+                                       x_lim=[-1, 5.5], y_lim=[-1, 5.5], errbar = True, std_scatter = True,
+                                       std_scatter_test = False, save_fig=False, out_file=None):
+    '''
+    Function plotting the correlation of y and y_pred of training samples, and test samples (can be in categories and has to
+    be provided by a named dictionary and a list of label names; the test set will be highlighted with colors (list of colors).
+    Errorbars and blue dots showing the std deviations of test set. The stdandard deviations can also be shown as dots for
+    the training set.
+    '''
+    # correlation line for train values
+    x = y
+
+    par = np.polyfit(x, y_pred, 1, full=True)
+    slope = par[0][0]
+    intercept = par[0][1]
+
+    if type(y_std_test_set_dict) is dict:
+        std = y_std * x_std
+        # get coordinates for the correlation line
+        y_corline = np.asarray([i*slope + intercept for i in x])
+        std_pos = np.add(y_corline, np.abs(std))
+        std_neg = np.subtract(y_corline, np.abs(std))
+        # fit line to the stds and get y values of fit in a set range
+        l_pos = np.polyfit(x, std_pos, 2)
+        l_neg = np.polyfit(x, std_neg, 2)
+
+        # get x and y values
+        x_area = np.append(x, x_lim[1])
+        x_area = np.insert(x_area, 0, x_lim[0])
+
+        # combine values in dataframe to sort according to x
+        var_df = pd.DataFrame()
+        var_df['x_area'] = x_area
+        var_df['std_positive'] = x_area ** 2 * l_pos[0] + x_area * l_pos[1] + l_pos[2]
+        var_df['std_negative'] = x_area ** 2 * l_neg[0] + x_area * l_neg[1] + l_neg[2]
+        var_df.sort_values('x_area', inplace=True)
 
 
+    plt.figure('GP testset evaluation', figsize=(5, 5))
+    plt.title('Correlation of measured and predicted KD values - \nhighlighting test set')
+    plt.xlabel('measured')
+    plt.ylabel('predicted')
+    # set y and x axis
+    plt.ylim(y_lim)
+    plt.xlim(x_lim)
+
+    if type(y_std_test_set_dict) is dict:
+        plt.fill_between(var_df['x_area'], var_df['std_positive'], var_df['std_negative'],
+                         alpha = 0.3 , interpolate=True, color = 'orange')
+
+    # Scatter plot of train points
+    plt.scatter(x, y_pred, color='k',
+                s=15, alpha=1)
+
+    # print the test set categories
+    for i, lab_n in enumerate(label_n):
+        hiKD_rat = plt.scatter(y_test_set_dict[lab_n], y_pred_test_set_dict[lab_n],
+                               marker='o', color=colors[i], label=lab_n)
+
+        if type(y_std_test_set_dict) is dict:
+            # show errorbars
+            if errbar == True:
+                plt.errorbar(y_test_set_dict[lab_n], y_pred_test_set_dict[lab_n],
+                             fmt='none', color='k', yerr=y_std_test_set_dict[lab_n], alpha=0.3)
+            # show scatter for standard deviation
+            if std_scatter_test == True:
+                std_test_pos = np.add(y_pred_test_set_dict[lab_n], np.abs(y_std_test_set_dict[lab_n]))
+                std_test_neg = np.subtract(y_pred_test_set_dict[lab_n], np.abs(y_std_test_set_dict[lab_n]))
+                plt.scatter(y_test_set_dict[lab_n], std_test_pos, color='b', s=4, marker = ".")
+                plt.scatter(y_test_set_dict[lab_n], std_test_neg, color='b', s=4, marker = ".")
+
+        if std_scatter == True:
+            std_test_pos = np.add(y_pred, np.abs(std))
+            std_test_neg = np.subtract(y_pred, np.abs(std))
+            plt.scatter(x, std_test_pos, color='b', s=4, marker=".", alpha=0.7)
+            plt.scatter(x, std_test_neg, color='b', s=4, marker=".", alpha=0.7)
 
 
+    plt.legend(loc='lower right')
+    plt.plot(x_lim, [x_lim[0] * slope + intercept, x_lim[1] * slope + intercept], '-', c='k')
 
-# ############################################## TEST CDRdist
-# #
-# #### LOAD INPUT ####
-# input_dir = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/GP/input/'
-# input_f_seq = input_dir + 'Final_49_AA_from_geneious.csv'
-# input_f_KD = input_dir + 'HC_KDvals.csv'
-#
-# # output file directory
-# dir_out = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/Plots/GP_model/LD_Correlation/'
-#
-# # Load sequence data
-# df_seq = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence'])
-#
-# # Load KD values and add them together to a new dataframe (remove samples that w/o measured KD value)
-# KDs = pd.read_csv(input_f_KD, usecols=['SampleID', 'KD'])
-# data = pd.merge(df_seq,KDs, on='SampleID')
-#
-# KDs_unnormalized = data
-#
-# #### DATA PROCESSING ####
-#
-# # normalize data
-# data['KD'] = normalize_test_train_set(data['KD'])
-#
-# # split into train and test data
-# X_train, X_test, y_train, y_test = split_data(data, 5, r_state=123)
-#
-#
-#
-#
-# seqs = data['Sequence'].values
-# KDs = data['KD'].values
-#
-#
-# # test inner cv loop for hyperparameter tuning
-# k = 35
-# mus, vars, y_true, prams_test = cv_param_tuning(seqs, KDs, k, init_param=100)
-#
-# #
-#
-#
-# # calculate and print scores
-# r2, cor_coef, MSE= calc_print_scores(y_true, mus, k)
-#
-# # draw simple correlation plot
-# correlation_plot(y_true, mus, cor_line=False, save_fig=False)
-#                     # , out_file =str(dir_outLD+'LD_corr_CV_simple.png'))
-#
-#
-# # draw correlation plot with standard deviation
-# corr_var_plot(y_true, mus, vars, x_std=2, legend=True, R2=r2, corr_coef=cor_coef, MSE = MSE, save_fig=False, method='outercycle')
-#                  # , out_file = str(dir_outLD+'LD_corr_variance_CV.png'))
+    if save_fig == True:
+        plt.savefig(fname=out_file)
 
-
-### Test sensitivity of hyperparameter; same results for init_param: 0.5,1.2.10,100 for LD
-
-
-
-
-
-
-
-
-
-
-
-
-
+    plt.show()
+    plt.close()
