@@ -23,14 +23,20 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
-import warnings
+import random
 
 # Suppress the warning from sklearn.metrics module
-# from sklearn.exceptions import UndefinedMetricWarning
-# warnings.filterwarnings("ignore", category=UndefinedMetricWarning)#, module='sklearn.metrics')
+import warnings
+from sklearn.exceptions import UndefinedMetricWarning
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)#, module='sklearn.metrics')
 
 
 def run():
+    ###### SET PARAMETERS ######
+    random.seed(123)
+    log_transform = True  # test if the models predict differently
+
+
     ###### SET INPUT DIRECTORIES ######
     in_dir2 = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/input'
     in_f2 = os.path.join(in_dir2, 'input_HCs.csv')
@@ -38,8 +44,9 @@ def run():
 
     # output plot for the plots
     dir_output_plots = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/final_validation/log_transformed_data'
-
-    log_transform = True  # test if the models predict differently
+    dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation/final_validation/log_transformed_data'
+    if not os.path.exists(dir_out_eval):
+        os.makedirs(dir_out_eval)
 
     ###### LOAD DATA ######
     data = pd.read_csv(in_f2, usecols=['SampleID', 'Sequence', 'KD'])
@@ -73,7 +80,7 @@ def run():
     # test the framework
     # model names for saving files etc.
     model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern", "KernelRidge",
-         "RandomForestRegression", "OrdinalLinearRegression"
+          "RandomForestRegression", "OrdinalLinearRegression"
     ]
     # list of parameters to test per model (take care of order!)
     param_list = [{'regressor__kernel': [None, RBF()],
@@ -91,7 +98,7 @@ def run():
     # set True for GPs, False for other models; (again order!)
     vars_list = [True, True,
                  False, False, False]
-    # ]
+
 
     model_list = [GaussianProcessRegressor(random_state=1),
                   GaussianProcessRegressor(random_state=1),
@@ -104,12 +111,12 @@ def run():
     metrics = {'neg_MSE': 'neg_mean_squared_error', 'r2': 'r2'}
     lim=[-0.5,2.5] # x & y limits for the plots
 
-
+    test_score_df = pd.DataFrame(columns=['Model', 'R2', 'Corr_coef', 'MSE'])
 
     #### LOOP THROUGH ALL THE MODELS ####
     for i, model_name in enumerate(model_names):
         print()
-        print('Start model evaluation: '+ model_name)
+        print('--- Start model evaluation: '+ model_name)
         param_grid = param_list[i]
         reg = model_list[i]
         w_vars = vars_list[i]
@@ -123,13 +130,14 @@ def run():
 
 
         # define class model
-        print('Optimize parameters')
+        print('\n--- Optimize parameters')
 
         kernel = REV.regression_model_evaluation(X_train, y_train.reshape(-1,), reg, model_name, metrics)
 
         kernel.k_CV_and_plot(param_grid, k=len(X_train), plot = True, save_fig=True, x_lim=lim,
                                                       y_lim=lim, w_vars = w_vars,
                                                       save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
+
 
         print('\nPredict designed sequences as test set\n')
         # get the predictions for the
@@ -149,6 +157,13 @@ def run():
 
         # print scores
         r2, cor_coef, MSE = GP.calc_print_scores(y_test.reshape(-1,), y_test_pred.reshape(-1,), k=len(X_train))
+
+        # combine to dataframe
+        test_score_df.loc[i, 'R2'] = r2
+        test_score_df.loc[i, 'Corr_coef'] = cor_coef
+        test_score_df.loc[i, 'MSE'] = MSE
+        test_score_df.loc[i, 'Model'] = str(kernel.best_model[1])
+
 
 
         #### MAKE CORRELATION PLOT WITH THE TEST SET HIGHLIGHTED - CONFIDENCE INTERVAL IS FIT ON THE TEST SET TOO! ####
@@ -220,6 +235,11 @@ def run():
         print("--------------------------------------------------------")
         print("DONE with " + model_name)
         print("---------------------++++++++++++-----------------------")
+
+
+
+    # --- SAVE THE SUMMARIZED DATAFRAMES - CV MODEL SCORES AND TEST SET MODEL SCORES
+    test_score_df.to_csv(os.path.join(dir_out_eval, 'Test_scores_designed_vars_tuned_model.csv'))
 
 
 
