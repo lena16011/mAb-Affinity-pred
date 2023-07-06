@@ -139,21 +139,22 @@ def run():
                                                       save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
 
 
-        print('\nPredict designed sequences as test set\n')
+        print('\n--- Predict designed sequences as test set\n')
         # get the predictions for the
         if w_vars is True:
-            y_test_pred, y_test_std = kernel.best_model.predict(X_test, return_std = True)
+            y_test_pred, y_test_vars = kernel.best_model.predict(X_test, return_std = True)
+            y_test_vars = y_test_vars**2
         elif w_vars is False:
             y_test_pred = kernel.best_model.predict(X_test)
 
         # make a dataframe with ids, y, y_pred, category (train, test (hi, mid, lo kd
         pred_df = pd.DataFrame({'IDs': np.append(data.SampleID, novel_data.IDs[~np.isnan(novel_data['KD_nM'])]),
                                 'VDJ_AA': np.append(X_seq_train, X_seq_test), 'y': np.append(kernel.y , y_test),
-                                'y_pred': np.append(kernel.y_pred, y_test_pred), #'y_std': np.append(kernel.vars , y_test_std),
+                                'y_pred': np.append(kernel.y_pred, y_test_pred),
                                 'train_label': np.append(np.asarray(['train'] * len(kernel.y)).reshape(-1,), novel_data.label[~np.isnan(novel_data['KD_nM'])])
                                 })
         if w_vars is True:
-            pred_df['y_std'] = np.append(kernel.vars , y_test_std)
+            pred_df['y_var'] = np.append(kernel.vars , y_test_vars)
 
         # print scores
         r2, cor_coef, MSE = GP.calc_print_scores(y_test.reshape(-1,), y_test_pred.reshape(-1,), k=len(X_train))
@@ -170,9 +171,9 @@ def run():
         # CONFIDENCE INTERVAL IS FIT ON THE TEST SET TOO! Can be adjusted for non probablistic models
         if w_vars is True:
             # adjust correlation plot for highlighting the novel sequences
-            GP.corr_var_plot_highlighted(measured_train = kernel.y, predicted_train = kernel.y_pred, stdev_train = kernel.vars, x_std=2,
+            GP.corr_var_plot_highlighted(measured_train = kernel.y, predicted_train = kernel.y_pred, vars_train = kernel.vars, x_std=2,
                                          measured_test = y_test, predicted_test = y_test_pred,x_lim = lim, y_lim = lim,
-                                         stdev_test = y_test_std, legend=True, R2=r2, cor_coef=cor_coef, MSE=MSE, save_fig = True,
+                                         vars_test = y_test_vars, legend=True, R2=r2, cor_coef=cor_coef, MSE=MSE, save_fig = True,
                                          out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highlighted.pdf'))
 
 
@@ -189,17 +190,17 @@ def run():
 
         # define stds, if model predicts so
         if w_vars is True:
-            y_std = pred_df.y_std.values[pred_df.train_label == 'train']
-            y_std_test_set_dict = {'hiKD_rat': pred_df.y_std.values[pred_df.train_label == 'hiKD_rat'],
-                                   'loKD_rat': pred_df.y_std.values[pred_df.train_label == 'loKD_rat']}
+            y_var = pred_df.y_var.values[pred_df.train_label == 'train']
+            y_var_test_set_dict = {'hiKD_rat': pred_df.y_var.values[pred_df.train_label == 'hiKD_rat'],
+                                   'loKD_rat': pred_df.y_var.values[pred_df.train_label == 'loKD_rat']}
         else:
-            y_std_test_set_dict = False
-            y_std = False
+            y_var_test_set_dict = False
+            y_var = False
 
         # Correlation plot
-        GP.corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dict, y_pred_test_set_dict,
-                                               y_std_test_set_dict, x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a'],
-                                               x_lim=lim, y_lim=lim, errbar = True, std_scatter = False,
+        GP.corr_var_plot_highlighted_extended(y, y_pred, y_var, label_n, y_test_set_dict, y_pred_test_set_dict,
+                                               y_var_test_set_dict, x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a'],
+                                               x_lim=lim, y_lim=lim, errbar=True, std_scatter = False,
                                                std_scatter_test = False, save_fig=True, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar_only_rat.pdf'))
 
 
@@ -218,17 +219,17 @@ def run():
                                 'loLD_mid': pred_df.y_pred.values[pred_df.train_label == 'loLD_mid']}
         # define stds, if model predicts so
         if w_vars is True:
-            y_std_test_set_dict = {'hiKD_rat': pred_df.y_std.values[pred_df.train_label == 'hiKD_rat'],
-                                   'loKD_rat': pred_df.y_std.values[pred_df.train_label == 'loKD_rat'],
-                                   'germ_line_HC50': pred_df.y_std.values[pred_df.train_label == 'germ_line_HC50'],
-                                   'loLD_pos': pred_df.y_std.values[pred_df.train_label == 'loLD_pos'],
-                                   'loLD_mid': pred_df.y_std.values[pred_df.train_label == 'loLD_mid']}
+            y_var_test_set_dict = {'hiKD_rat': pred_df.y_var.values[pred_df.train_label == 'hiKD_rat'],
+                                   'loKD_rat': pred_df.y_var.values[pred_df.train_label == 'loKD_rat'],
+                                   'germ_line_HC50': pred_df.y_var.values[pred_df.train_label == 'germ_line_HC50'],
+                                   'loLD_pos': pred_df.y_var.values[pred_df.train_label == 'loLD_pos'],
+                                   'loLD_mid': pred_df.y_var.values[pred_df.train_label == 'loLD_mid']}
         else:
-            y_std_test_set_dict = False
+            y_var_test_set_dict = False
 
 
-        GP.corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dict, y_pred_test_set_dict,
-                                               y_std_test_set_dict, x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a', '#6f07b0'],
+        GP.corr_var_plot_highlighted_extended(y, y_pred, y_var, label_n, y_test_set_dict, y_pred_test_set_dict,
+                                               y_var_test_set_dict, x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a', '#6f07b0'],
                                                x_lim=lim, y_lim=lim, errbar = True, std_scatter = False,
                                                std_scatter_test = False, save_fig=True, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar.pdf'))
 

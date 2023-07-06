@@ -369,6 +369,7 @@ class regression_model_evaluation:
                 self.best_model.fit(self.X_OH[train_index], self.y[train_index])
                 _, self.vars[test_index] = self.best_model.predict(self.X_OH[test_index], return_std=True)
 
+            # square for returning the variance
             self.vars = self.vars.reshape(-1, )**2
 
 
@@ -401,8 +402,8 @@ def run():
     randomized = False # set true to run the models with randomized labels for evaluation
     log_transform = True # test if the models predict differently
     # model names for saving files etc.
-    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
-                   "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"
+    model_names = ["GaussianProcess_RBF"#, "GaussianProcess_Matern",
+                  # "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"
                    ]
     # list of parameters to test per model (take care of order!)
     param_list = [

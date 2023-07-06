@@ -1208,8 +1208,8 @@ def corr_var_plot(measured, predicted, vars=False, x_std=1, legend = False, meth
     plt.close()
 
 # plot not optimized for models without vars
-def corr_var_plot_highlighted(measured_train, predicted_train, stdev_train,
-                              measured_test, predicted_test, stdev_test, legend=False, x_std=1,
+def corr_var_plot_highlighted(measured_train, predicted_train, vars_train,
+                              measured_test, predicted_test, vars_test, legend=False, x_std=1,
                               R2=None, cor_coef=None, MSE=None,x_lim = [-2.5, 2.5], y_lim = [-2.5, 2.5],
                               save_fig = False, out_file=None):
 
@@ -1224,8 +1224,8 @@ def corr_var_plot_highlighted(measured_train, predicted_train, stdev_train,
     x = np.concatenate((x_train, x_test))
     y_pred = np.concatenate((y_pred_train, y_pred_test))
 
-    std_test = x_std * np.asarray(stdev_test).reshape(-1, )
-    std_train = x_std * np.asarray(stdev_train).reshape(-1, )
+    std_test = x_std * np.sqrt(np.asarray(vars_test)).reshape(-1, )
+    std_train = x_std * np.sqrt(np.asarray(vars_train)).reshape(-1, )
     std = np.concatenate((std_train, std_test))
 
     # correlation line for all values
@@ -1299,7 +1299,7 @@ def corr_var_plot_highlighted(measured_train, predicted_train, stdev_train,
 
 # additional correlation plot for highlighting categories of test set (differently designed variants)
 # plot not optimized for models without vars
-def corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dict, y_pred_test_set_dict, y_std_test_set_dict,
+def corr_var_plot_highlighted_extended(y, y_pred, y_var, label_n, y_test_set_dict, y_pred_test_set_dict, y_var_test_set_dict,
                                        x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a'],
                                        x_lim=[-1, 5.5], y_lim=[-1, 5.5], errbar = True, std_scatter = True,
                                        std_scatter_test = False, save_fig=False, out_file=None):
@@ -1316,8 +1316,8 @@ def corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dic
     slope = par[0][0]
     intercept = par[0][1]
 
-    if type(y_std_test_set_dict) is dict:
-        std = y_std * x_std
+    if type(y_var_test_set_dict) is dict:
+        std = np.sqrt(y_var) * x_std
         # get coordinates for the correlation line
         y_corline = np.asarray([i*slope + intercept for i in x])
         std_pos = np.add(y_corline, np.abs(std))
@@ -1346,7 +1346,7 @@ def corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dic
     plt.ylim(y_lim)
     plt.xlim(x_lim)
 
-    if type(y_std_test_set_dict) is dict:
+    if type(y_var_test_set_dict) is dict:
         plt.fill_between(var_df['x_area'], var_df['std_positive'], var_df['std_negative'],
                          alpha = 0.3 , interpolate=True, color = 'orange')
 
@@ -1359,15 +1359,17 @@ def corr_var_plot_highlighted_extended(y, y_pred, y_std, label_n, y_test_set_dic
         hiKD_rat = plt.scatter(y_test_set_dict[lab_n], y_pred_test_set_dict[lab_n],
                                marker='o', color=colors[i], label=lab_n)
 
-        if type(y_std_test_set_dict) is dict:
+        if type(y_var_test_set_dict) is dict:
             # show errorbars
-            if errbar == True:
+            if errbar is True:
+
                 plt.errorbar(y_test_set_dict[lab_n], y_pred_test_set_dict[lab_n],
-                             fmt='none', color='k', yerr=y_std_test_set_dict[lab_n], alpha=0.3)
+                             fmt='none', color='k', yerr=np.sqrt(y_var_test_set_dict[lab_n]), alpha=0.3)
             # show scatter for standard deviation
-            if std_scatter_test == True:
-                std_test_pos = np.add(y_pred_test_set_dict[lab_n], np.abs(y_std_test_set_dict[lab_n]))
-                std_test_neg = np.subtract(y_pred_test_set_dict[lab_n], np.abs(y_std_test_set_dict[lab_n]))
+            if std_scatter_test is True:
+
+                std_test_pos = np.add(y_pred_test_set_dict[lab_n], np.abs(np.sqrt(y_var_test_set_dict[lab_n])))
+                std_test_neg = np.subtract(y_pred_test_set_dict[lab_n], np.abs(np.sqrt(y_var_test_set_dict[lab_n])))
                 plt.scatter(y_test_set_dict[lab_n], std_test_pos, color='b', s=4, marker = ".")
                 plt.scatter(y_test_set_dict[lab_n], std_test_neg, color='b', s=4, marker = ".")
 
