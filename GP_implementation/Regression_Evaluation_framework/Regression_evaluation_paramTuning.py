@@ -402,8 +402,8 @@ def run():
     randomized = False # set true to run the models with randomized labels for evaluation
     log_transform = True # test if the models predict differently
     # model names for saving files etc.
-    model_names = ["GaussianProcess_RBF"#, "GaussianProcess_Matern",
-                  # "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"
+    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
+                  "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"
                    ]
     # list of parameters to test per model (take care of order!)
     param_list = [

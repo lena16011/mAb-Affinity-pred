@@ -79,8 +79,10 @@ def run():
     #### SET MODEL PARAMETERS ####
     # test the framework
     # model names for saving files etc.
-    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern", "KernelRidge",
-          "RandomForestRegression", "OrdinalLinearRegression"
+    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
+                   "KernelRidge",
+                   "RandomForestRegression",
+                   "OrdinalLinearRegression"
     ]
     # list of parameters to test per model (take care of order!)
     param_list = [{'regressor__kernel': [None, RBF()],
@@ -115,6 +117,7 @@ def run():
 
     #### LOOP THROUGH ALL THE MODELS ####
     for i, model_name in enumerate(model_names):
+        #i=1
         print()
         print('--- Start model evaluation: '+ model_name)
         param_grid = param_list[i]

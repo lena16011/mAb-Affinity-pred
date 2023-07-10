@@ -1,9 +1,3 @@
-'''
-Script to visualize the metrics for the
-
- - Barplot of model metrics
-
-'''
 
 
 import pandas as pd
@@ -17,7 +11,7 @@ from scipy.stats import ttest_ind
 
 ###### SET INPUT DIRECTORIES & LOAD DATA ######
 # Set paths to originally selected and novel sequences
-in_f1 = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation/log_transformed_input/Param_tuned_LOOCV_scores.csv'
+in_f1 = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation/final_validation/log_transformed_data/Test_scores_designed_vars_tuned_model.csv'
 
 
 # set path to output folder
@@ -25,15 +19,16 @@ save_path = "/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/
 
 # load selected sequences
 data = pd.read_csv(in_f1, index_col=0)
-data.reset_index(inplace=True, drop=True)
 data.drop(index=4, inplace=True)
+data["Model_params"] = data["Model"]
 data.loc[0, 'Model'] = 'GP RBF'
 data.loc[1, 'Model'] = 'GP Matern'
 data.loc[2, 'Model'] = 'Kernel Ridge'
 data.loc[3, 'Model'] = 'Random Forest'
-#data.loc[4, 'Model'] = 'Linear'
-data.rename(columns={"R2": "R^2", "Corr_coef": "Correlation coefficient"}, inplace=True)
-d_m = pd.melt(data.loc[:,['Model', 'MSE', 'Correlation coefficient', 'R^2']], id_vars=['Model'], var_name='Metric')
+data['R2'] = -data['R2']
+data.rename(columns={"R2": "-R^2", "Corr_coef": "Correlation coefficient"}, inplace=True)
+
+d_m = pd.melt(data.loc[:,['Model', 'MSE', 'Correlation coefficient']], id_vars=['Model'], var_name='Metric')
 
 
 c_pal = 'Paired'
@@ -41,7 +36,7 @@ fig_size = (5, 7)
 x='Model'
 y='value'
 hue='Metric'
-save_fig = os.path.join(save_path, 'R2_CorrCoef_Barplot_LOOCV.pdf')
+save_fig = os.path.join(save_path, 'R2_CorrCoef_Barplot_LOOCV_novVars.pdf')
 
 
 # setup a box plot with the original sequences
@@ -53,7 +48,7 @@ b = sns.barplot(data=d_m, x=x, y=y, hue=hue,
                 palette=c_pal)  # Stop showing the fliers)
 # y axis
 b.set(ylabel=None) # remove y label
-b.set_ylim(0, 1.2)
+b.set_ylim(0, 1.0)
 # # y axis
 b.set_xlabel("Regression model", fontsize=14) # Set the x axis label and font size
 b.set_xticklabels(b.get_xticklabels(), rotation=45, horizontalalignment='right')
@@ -61,5 +56,4 @@ b.set_xticklabels(b.get_xticklabels(), rotation=45, horizontalalignment='right')
 plt.tight_layout()
 plt.savefig(save_fig)
 plt.show()
-
 
