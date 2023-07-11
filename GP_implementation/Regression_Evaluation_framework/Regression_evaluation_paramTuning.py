@@ -332,7 +332,7 @@ class regression_model_evaluation:
             self.k_eval_plot.show()
             self.k_eval_plot.close()
 
-    def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, x_lim=[-0.2,2.5], y_lim=[-0.2,2.5],
+    def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, x_lim=[-0.2,2.5], y_lim=[-0.2,2.5], x_std = 2,
                       save_fig: bool=False, w_vars = False, save_path=None) -> pd.DataFrame:
 
         kf = KFold(n_splits=k, shuffle=True, random_state=1)  # Define the n_split = number of folds
@@ -382,7 +382,7 @@ class regression_model_evaluation:
 
         # plot the results
         if plot == True:
-            GP.corr_var_plot(self.y, self.y_pred, vars=self.vars, x_std=2,
+            GP.corr_var_plot(self.y, self.y_pred, vars=self.vars, x_std=x_std,
                              legend=True, method="\n" + self.model_name + " regression", x_lim=x_lim, y_lim=y_lim,
                              R2=r2, corr_coef=cor_coef, MSE=MSE, save_fig=save_fig, out_file=save_path)
 

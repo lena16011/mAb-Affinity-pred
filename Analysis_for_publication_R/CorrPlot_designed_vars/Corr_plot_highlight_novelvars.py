@@ -114,17 +114,17 @@ def run():
     lim=[-0.5,2.5] # x & y limits for the plots
 
     test_score_df = pd.DataFrame(columns=['Model', 'R2', 'Corr_coef', 'MSE'])
+    prediction_df = pd.DataFrame(columns=['IDs', 'VDJ_AA', 'y', 'y_pred', 'train_label', 'y_var', 'Model'])
 
     #### LOOP THROUGH ALL THE MODELS ####
     for i, model_name in enumerate(model_names):
-        #i=1
-        print()
-        print('--- Start model evaluation: '+ model_name)
+
         param_grid = param_list[i]
         reg = model_list[i]
         w_vars = vars_list[i]
         model_name = model_names[i]
-
+        print()
+        print('--- Start model evaluation: ' + model_name)
 
         #### SET OUTPUT DIRECTORIES (for plots to save) ####
         dir_out = os.path.join(dir_output_plots, model_name)
@@ -137,7 +137,7 @@ def run():
 
         kernel = REV.regression_model_evaluation(X_train, y_train.reshape(-1,), reg, model_name, metrics)
 
-        kernel.k_CV_and_plot(param_grid, k=len(X_train), plot = True, save_fig=True, x_lim=lim,
+        kernel.k_CV_and_plot(param_grid, k=len(X_train), plot = True, save_fig=True, x_lim=lim, x_std=2,
                                                       y_lim=lim, w_vars = w_vars,
                                                       save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
 
@@ -158,6 +158,9 @@ def run():
                                 })
         if w_vars is True:
             pred_df['y_var'] = np.append(kernel.vars , y_test_vars)
+
+        pred_df["Model"] = model_name
+        prediction_df = prediction_df.append(pred_df)
 
         # print scores
         r2, cor_coef, MSE = GP.calc_print_scores(y_test.reshape(-1,), y_test_pred.reshape(-1,), k=len(X_train))
@@ -232,7 +235,7 @@ def run():
 
 
         GP.corr_var_plot_highlighted_extended(y, y_pred, y_var, label_n, y_test_set_dict, y_pred_test_set_dict,
-                                               y_var_test_set_dict, x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a', '#6f07b0'],
+                                               y_var_test_set_dict, x_std=1, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a', '#6f07b0'],
                                                x_lim=lim, y_lim=lim, errbar = True, std_scatter = False,
                                                std_scatter_test = False, save_fig=True, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar.pdf'))
 
@@ -244,7 +247,7 @@ def run():
 
     # --- SAVE THE SUMMARIZED DATAFRAMES - CV MODEL SCORES AND TEST SET MODEL SCORES
     test_score_df.to_csv(os.path.join(dir_out_eval, 'Test_scores_designed_vars_tuned_model.csv'))
-
+    prediction_df.to_csv(os.path.join(dir_out_eval, 'Predictions_allvariants_tuned_model.csv'))
 
 
 def main():

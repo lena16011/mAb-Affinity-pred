@@ -25,8 +25,7 @@ data.loc[0, 'Model'] = 'GP RBF'
 data.loc[1, 'Model'] = 'GP Matern'
 data.loc[2, 'Model'] = 'Kernel Ridge'
 data.loc[3, 'Model'] = 'Random Forest'
-data['R2'] = -data['R2']
-data.rename(columns={"R2": "-R^2", "Corr_coef": "Correlation coefficient"}, inplace=True)
+data.rename(columns={"Corr_coef": "Correlation coefficient"}, inplace=True)
 
 d_m = pd.melt(data.loc[:,['Model', 'MSE', 'Correlation coefficient']], id_vars=['Model'], var_name='Metric')
 
