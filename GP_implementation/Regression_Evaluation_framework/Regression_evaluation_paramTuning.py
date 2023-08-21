@@ -458,7 +458,7 @@ def run():
     # one-hot encoding
     X_OH = GP.one_hot_encode_matern(X)
 
-    k_outer=5
+    k_outer=10
     k_l = list(range(2,len(X_OH),1))
     k_l.append(len(X_OH))
 
@@ -495,10 +495,9 @@ def run():
         #
         ### MODEL EVALUATION WITH NESTED CV (set k values)
         print('\nPerform nested CV')
-        non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=5,
+        non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=10,
                                                                                     verbose=0)
-        # # save scores dataframe
-        # scores_df.to_csv(os.path.join(dir_out_eval, model_name+'_CV_scores.csv'))
+        # save scores dataframe
         Nested_Scores_df = Nested_Scores_df.append(scores_df)
 
         ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
@@ -515,7 +514,7 @@ def run():
         print("---------------------++++++++++++-----------------------")
 
     # save dataframes
-    Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores.csv'))
+    Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores_test.csv'))
     LOO_Scores_df.to_csv(os.path.join(dir_out_eval, 'Param_tuned_LOOCV_scores.csv'))
 
 
