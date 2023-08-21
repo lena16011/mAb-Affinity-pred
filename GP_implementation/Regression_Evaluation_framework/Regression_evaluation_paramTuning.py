@@ -514,7 +514,7 @@ def run():
         print("---------------------++++++++++++-----------------------")
 
     # save dataframes
-    Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores_test.csv'))
+    Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores.csv'))
     LOO_Scores_df.to_csv(os.path.join(dir_out_eval, 'Param_tuned_LOOCV_scores.csv'))
 
 
