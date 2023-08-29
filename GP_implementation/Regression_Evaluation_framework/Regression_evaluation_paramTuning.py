@@ -118,7 +118,7 @@ class regression_model_evaluation:
         self.best_score = None # score from best model from non-nested CV
 
     def nested_param_tuning_eval(self, param_grid: dict, k_o: int =10, k_i: int =5,
-                                 verbose: int =0):
+                                 n_jobs : int = 1, verbose: int =0,):
         """ Implementation of nested CV andparameter tuning
 
                 Performs nested CV and returns outer (non-nested) and nested (outer and inner, separately) and summarized
@@ -166,7 +166,8 @@ class regression_model_evaluation:
                                       param_grid=param_grid,
                                       scoring=self.metrics,
                                       cv=kf_o,
-                                      refit=list(self.metrics.keys())[0])
+                                      refit=list(self.metrics.keys())[0],
+                                      n_jobs=n_jobs)
 
         # Non_nested parameter search and scoring
         grid_search_nn.fit(self.X_OH, self.y)
@@ -260,7 +261,7 @@ class regression_model_evaluation:
 
 
     def evaluate_k(self, param_grid: dict, k_in: int, k_l: list, plot: bool = True,
-                   save_fig: bool=False, save_path=False, verbose: bool=0):
+                   n_jobs : int = 1, save_fig: bool=False, save_path=False, verbose: bool=0):
         """ Evaluation of ks for consitency of CV scoring across choice of k
 
                 Performs nested CV for a list of k valuse and summarizes scores (defined by metrics dict);
@@ -309,8 +310,8 @@ class regression_model_evaluation:
         # evaluate different ks
         for k_s in self.k_l:
             # run nested CV loops for different ks
-            non_nested_cv_df, nested_cv_df, scores_df = self.nested_param_tuning_eval(self.param_grid,
-                                                                                      k_o=k_s, k_i = self.k_i,  verbose=verbose)
+            non_nested_cv_df, nested_cv_df, scores_df = self.nested_param_tuning_eval(self.param_grid, n_jobs = n_jobs,
+                                                                                      k_o=k_s, k_i = self.k_i, verbose=verbose)
 
             # convert neg_meansquared error to mean_squared error in non-nested df
             non_nested_cv_df.mean_test_neg_MSE = non_nested_cv_df.mean_test_neg_MSE
@@ -401,19 +402,25 @@ def run():
     random.seed(123)
     randomized = False # set true to run the models with randomized labels for evaluation
     log_transform = True # test if the models predict differently
+
+    k_inner = 10
+    k_outer = 10
+    verbose = 1
+    n_jobs = -1
+
     # model names for saving files etc.
     model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
                   "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"
                    ]
     # list of parameters to test per model (take care of order!)
     param_list = [
-                  {'regressor__kernel': [None, RBF()],
-                   'regressor__alpha': [1e-10, 0.1]},
-                  {'regressor__kernel': [None, Matern()],
-                   'regressor__alpha': [1e-10, 0.1]},
-                  {'regressor__alpha': [0.1, 1.0, 10.0],
+                  {'regressor__kernel': [RBF(l) for l in np.logspace(-1, 1, 3)],
+                   'regressor__alpha': [1e-10, 1e-3, 0.1]},
+                  {'regressor__kernel': [Matern(l) for l in np.logspace(-1, 1, 3)],
+                   'regressor__alpha': [1e-10, 1e-3, 0.1]},
+                  {'regressor__alpha': [1e-3, 0.1, 1.0, 10.0],
                    'regressor__kernel': ['linear', 'rbf', 'polynomial'],
-                   'regressor__degree': [2, 3, 4],
+                   'regressor__degree': [2, 3],
                    'regressor__gamma': [0.1, 1.0, 10.0]},
                   {'regressor__n_estimators': [10, 100, 200],
                    'regressor__max_depth': [2, 5, 10]},
@@ -458,7 +465,7 @@ def run():
     # one-hot encoding
     X_OH = GP.one_hot_encode_matern(X)
 
-    k_outer=10
+    # list of ks to evaluate
     k_l = list(range(2,len(X_OH),1))
     k_l.append(len(X_OH))
 
@@ -489,33 +496,33 @@ def run():
         kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
 
         ### EVALUATE Ks FOR CV
-        # print('Evaluate k')
-        # kernel.evaluate_k(param_grid, k_in=5, k_l=k_l, plot = True, save_fig=True,
-        #                   save_path=os.path.join(dir_out,model_name+'_k_sensitivity_nestedCV.pdf'), verbose=0)
-        #
+        print('Evaluate k')
+        kernel.evaluate_k(param_grid, k_in=k_inner, k_l=k_l, plot = True, save_fig=True, n_jobs= n_jobs,
+                          save_path=os.path.join(dir_out, model_name+'_k_sensitivity_nestedCV_test_ki'+ str(k_inner) + '.pdf'), verbose=0)
+
         ### MODEL EVALUATION WITH NESTED CV (set k values)
         print('\nPerform nested CV')
-        non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=10,
-                                                                                    verbose=0)
+        non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=k_inner,
+                                                                                    n_jobs = n_jobs, verbose=verbose)
         # save scores dataframe
         Nested_Scores_df = Nested_Scores_df.append(scores_df)
 
         ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
-        ### LOO CV
-        print('\nPerform LOO-CV and make correlation plot')
-        model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, x_lim=[-0.5,2.5],
-                                              y_lim=[-0.5,2.5], w_vars = w_vars,
-                                              save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
-
-        LOO_Scores_df = LOO_Scores_df.append(model_score_df)
+        # ### LOO CV
+        # print('\nPerform LOO-CV and make correlation plot')
+        # model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, x_lim=[-0.5,2.5],
+        #                                       y_lim=[-0.5,2.5], w_vars = w_vars,
+        #                                       save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
+        #
+        # LOO_Scores_df = LOO_Scores_df.append(model_score_df)
         ##########################################################################################################
         print("--------------------------------------------------------")
         print("DONE with " + model_name)
         print("---------------------++++++++++++-----------------------")
 
     # save dataframes
-    Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores.csv'))
-    LOO_Scores_df.to_csv(os.path.join(dir_out_eval, 'Param_tuned_LOOCV_scores.csv'))
+    Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores_ki'+str(k_inner)+'_ko'+str(k_outer)+'.csv'))
+    # LOO_Scores_df.to_csv(os.path.join(dir_out_eval, 'Param_tuned_LOOCV_scores.csv'))
 
 
 
