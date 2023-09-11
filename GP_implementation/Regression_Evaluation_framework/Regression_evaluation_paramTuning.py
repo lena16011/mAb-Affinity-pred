@@ -24,7 +24,7 @@ import warnings, random
 # Suppress the warning from sklearn.metrics module
 from sklearn.exceptions import UndefinedMetricWarning
 
-warnings.filterwarnings("ignore", category=UndefinedMetricWarning)#, module='sklearn.metrics')
+
 
 def k_eval_plot(non_nested_scores: list, non_nested_mins: list, non_nested_maxs: list,
                 nested_scores: list, k_l: list, model_name: str, save_fig: list=False, save_path=False):
@@ -398,9 +398,11 @@ class regression_model_evaluation:
 
 def run():
     # #########################################################################################################
+    warnings.filterwarnings("ignore", category=UndefinedMetricWarning)  # , module='sklearn.metrics')
+
     # ###### SET MODEL AND PARAMETERS #####
     random.seed(123)
-    randomized = False # set true to run the models with randomized labels for evaluation
+    randomized = True # set true to run the models with randomized labels for evaluation
     log_transform = True # test if the models predict differently
 
     k_inner = 10
@@ -409,8 +411,9 @@ def run():
     n_jobs = -1
 
     # model names for saving files etc.
-    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
-                  "KernelRidge" , "RandomForestRegression", "OrdinalLinearRegression"
+    model_names = ["GaussianProcess_RBF",
+                   "GaussianProcess_Matern",
+                   "KernelRidge", "RandomForestRegression", "OrdinalLinearRegression"
                    ]
     # list of parameters to test per model (take care of order!)
     param_list = [
@@ -427,10 +430,14 @@ def run():
                   {'regressor__fit_intercept': [True, False]}
                   ]
     # set True for GPs, False for other models; (again order!)
-    vars_list = [True, True, False, False, False]
+    vars_list = [True,
+                 True,
+                 False,
+                 False, False
+                ]
 
     model_list = [
-        GaussianProcessRegressor(random_state=1),
+                  GaussianProcessRegressor(random_state=1),
                   GaussianProcessRegressor(random_state=1),
                   KernelRidge(),
                   RandomForestRegressor(random_state=1),
@@ -443,10 +450,14 @@ def run():
     if randomized is True:
         model_names = [n+'_randomized' for n in model_names]
 
-    ###### SET INPUT DIRECTORIES ######
+    ###### SET INPUT/OUTPUT DIRECTORIES ######
     input_dir = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/input'
     input_f_seq = os.path.join(input_dir, 'input_HCs.csv')
+    dir_out_model = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/log_transformed_input'
+    dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation/log_transformed_input'
 
+    if randomized is True:
+        dir_out_eval = os.path.join(dir_out_eval, 'randomized')
 
     ###### LOAD DATA #######
     data = pd.read_csv(input_f_seq, usecols=['SampleID', 'Sequence', 'KD'])
@@ -460,7 +471,7 @@ def run():
 
     # random labels
     if randomized is True:
-        y = data['KD_norm'].sample(frac=1).reset_index(drop = True).values
+        y = data['KD'].sample(frac=1).reset_index(drop = True).values
 
     # one-hot encoding
     X_OH = GP.one_hot_encode_matern(X)
@@ -485,8 +496,8 @@ def run():
         w_vars = vars_list[i]
 
         ## SET OUTPUT DIRECTORIES (for plots to save)
-        dir_out = os.path.join('/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/Plots/log_transformed_input', model_name)
-        dir_out_eval = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/GP_implementation/data/model_evaluation/log_transformed_input'
+        dir_out = os.path.join(dir_out_model, model_name)
+
         if not os.path.exists(dir_out):
             os.makedirs(dir_out)
         if not os.path.exists(dir_out_eval):
@@ -495,10 +506,10 @@ def run():
         # define class model
         kernel = regression_model_evaluation(X_OH, y, reg, model_name, metrics)
 
-        ### EVALUATE Ks FOR CV
-        print('Evaluate k')
-        kernel.evaluate_k(param_grid, k_in=k_inner, k_l=k_l, plot = True, save_fig=True, n_jobs= n_jobs,
-                          save_path=os.path.join(dir_out, model_name+'_k_sensitivity_nestedCV_test_ki'+ str(k_inner) + '.pdf'), verbose=0)
+        # ### EVALUATE Ks FOR CV
+        # print('Evaluate k')
+        # kernel.evaluate_k(param_grid, k_in=k_inner, k_l=k_l, plot = True, save_fig=True, n_jobs= n_jobs,
+        #                   save_path=os.path.join(dir_out, model_name+'_k_sensitivity_nestedCV_test_ki'+ str(k_inner) + '.pdf'), verbose=0)
 
         ### MODEL EVALUATION WITH NESTED CV (set k values)
         print('\nPerform nested CV')
@@ -508,13 +519,13 @@ def run():
         Nested_Scores_df = Nested_Scores_df.append(scores_df)
 
         ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
-        # ### LOO CV
-        # print('\nPerform LOO-CV and make correlation plot')
-        # model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, x_lim=[-0.5,2.5],
-        #                                       y_lim=[-0.5,2.5], w_vars = w_vars,
-        #                                       save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
-        #
-        # LOO_Scores_df = LOO_Scores_df.append(model_score_df)
+        ### LOO CV
+        print('\nPerform LOO-CV and make correlation plot')
+        model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_OH), plot = True, save_fig=True, x_lim=[-0.5,2.5],
+                                              y_lim=[-0.5,2.5], w_vars = w_vars,
+                                              save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
+
+        LOO_Scores_df = LOO_Scores_df.append(model_score_df)
         ##########################################################################################################
         print("--------------------------------------------------------")
         print("DONE with " + model_name)
@@ -522,7 +533,7 @@ def run():
 
     # save dataframes
     Nested_Scores_df.to_csv(os.path.join(dir_out_eval, 'Nested_CV_scores_ki'+str(k_inner)+'_ko'+str(k_outer)+'.csv'))
-    # LOO_Scores_df.to_csv(os.path.join(dir_out_eval, 'Param_tuned_LOOCV_scores.csv'))
+    LOO_Scores_df.to_csv(os.path.join(dir_out_eval, 'Param_tuned_LOOCV_scores.csv'))
 
 
 
