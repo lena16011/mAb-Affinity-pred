@@ -335,7 +335,7 @@ class regression_model_evaluation:
 
     def k_CV_and_plot(self, param_grid: dict, k: int, plot: bool = True, x_lim=[-0.2,2.5], y_lim=[-0.2,2.5], x_std = 2,
                       save_fig: bool=False, w_vars = False, save_path=None) -> pd.DataFrame:
-
+        random.seed(123)
         kf = KFold(n_splits=k, shuffle=True, random_state=1)  # Define the n_split = number of folds
 
         pipeline = Pipeline([
@@ -405,8 +405,8 @@ def run():
     randomized = True # set true to run the models with randomized labels for evaluation
     log_transform = True # test if the models predict differently
 
-    k_inner = 10
-    k_outer = 10
+    k_inner = 5
+    k_outer = 5
     verbose = 1
     n_jobs = -1
 
@@ -471,7 +471,7 @@ def run():
 
     # random labels
     if randomized is True:
-        y = data['KD'].sample(frac=1).reset_index(drop = True).values
+        y = data['KD'].sample(frac=1, random_state=1).reset_index(drop = True).values
 
     # one-hot encoding
     X_OH = GP.one_hot_encode_matern(X)
