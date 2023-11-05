@@ -12,7 +12,7 @@ Lena Erlach
 import pandas as pd
 import numpy as np
 import os
-import subprocess
+from tqdm import tqdm
 
 # save fasta files of sequences
 def save_fasta_file(sequence_df, col_name = "VDJ_aaSeq", id_name = "barcode", n_seq = 500, subdirectory = "data/", file_prefix = "Seq"):
@@ -68,14 +68,14 @@ def save_fasta_file(sequence_df, col_name = "VDJ_aaSeq", id_name = "barcode", n_
 ########################################################################
 # Load input
 ########################################################################
-input_file = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/VDJ_Sequence_Selection/data/Filtered_files/ess_HEL_all_merged.txt'
-fasta_dir = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/imgt_alignment'
-
-
-VDJ_file = pd.read_csv(input_file, delimiter= '\t', index_col=0).drop(columns=['Functionality', 'Table_CDR3'])
-VDJ_file.reset_index(inplace = True)
-
-
+# input_file = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/VDJ_Sequence_Selection/data/Filtered_files/ess_HEL_all_merged.txt'
+# fasta_dir = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/imgt_alignment'
+#
+#
+# VDJ_file = pd.read_csv(input_file, delimiter= '\t', index_col=0).drop(columns=['Functionality', 'Table_CDR3'])
+# VDJ_file.reset_index(inplace = True)
+#
+#
 
 
 ########################################################################
@@ -90,54 +90,58 @@ VDJ_file.reset_index(inplace = True)
 ########################################################################
 
 ROOT_DIR = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/imgt_alignment/'
+ROOT_DIR_PROCESSED = '/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/'
 
 mixcr_path_raw = os.path.join(ROOT_DIR, 'mixcr_VDJ_HEL.tsv')
 # updated path for
-mixcr_path = os.path.join(ROOT_DIR, 'TEMP_PROCESSED_mixcr_VDJ_HEL.tsv')
-mixcr_file = pd.read_csv(mixcr_path, delimiter= '\t')
+# mixcr_path = os.path.join(ROOT_DIR, 'TEMP_PROCESSED_mixcr_VDJ_HEL.tsv')
+
+mixcr_path = os.path.join(ROOT_DIR_PROCESSED, 'TEMP_mixcr_VDJ_HEL_clonotyped_80CDR3sim.csv')
+mixcr_file = pd.read_csv(mixcr_path, delimiter= ',')
+
 mixcr_file_raw = pd.read_csv(mixcr_path_raw, delimiter= '\t')
-
-i = 1
-
-# sequence is complete, but the imputed part is lower case & the missing part of the FR1 is imputed here and it seems to not have any differences!!
-''.join([mixcr_file.aaSeqFR1[i], mixcr_file.aaSeqCDR1[i], mixcr_file.aaSeqFR2[i], mixcr_file.aaSeqCDR2[i],
-         mixcr_file.aaSeqFR3[i], mixcr_file.aaSeqCDR3[i], mixcr_file.aaSeqFR4[i]])
-
-all(mixcr_file.aaSeqImputedCDR1[i:500] == mixcr_file.aaSeqCDR1[i:500])
-all(mixcr_file.aaSeqImputedCDR2[i:500] == mixcr_file.aaSeqCDR2[i:500])
-all(mixcr_file.aaSeqImputedCDR3[i:500] == mixcr_file.aaSeqCDR3[i:500])
-
-
-
-
-###### concat the sequences and upper case everything!
-cols_to_concat = ['aaSeqImputedFR1', 'aaSeqImputedCDR1', 'aaSeqImputedFR2', 'aaSeqImputedCDR2', 'aaSeqImputedFR3', 'aaSeqImputedCDR3', 'aaSeqImputedFR4']
-
-from tqdm import tqdm
-
-ids_dropped = []
-for id in tqdm(range(len(mixcr_file_raw)), total=len(mixcr_file_raw)):
-    try:
-        mixcr_file_raw.loc[id, "VDJ_aaSeq"] = ''.join([mixcr_file_raw.loc[id, c] for c in cols_to_concat])
-    except:
-        ids_dropped.append(id)
-
-print(ids_dropped)
-mixcr_file_raw['productive'] = airr_file.productive
-mixcr_file = mixcr_file_raw.drop(ids_dropped).copy()
-
-mixcr_file.reset_index(inplace=True, drop=True)
-mixcr_file.VDJ_aaSeq = mixcr_file.VDJ_aaSeq.str.upper()
+#
+# i = 1
+#
+# # sequence is complete, but the imputed part is lower case & the missing part of the FR1 is imputed here and it seems to not have any differences!!
+# ''.join([mixcr_file.aaSeqFR1[i], mixcr_file.aaSeqCDR1[i], mixcr_file.aaSeqFR2[i], mixcr_file.aaSeqCDR2[i],
+#          mixcr_file.aaSeqFR3[i], mixcr_file.aaSeqCDR3[i], mixcr_file.aaSeqFR4[i]])
+#
+# all(mixcr_file.aaSeqImputedCDR1[i:500] == mixcr_file.aaSeqCDR1[i:500])
+# all(mixcr_file.aaSeqImputedCDR2[i:500] == mixcr_file.aaSeqCDR2[i:500])
+# all(mixcr_file.aaSeqImputedCDR3[i:500] == mixcr_file.aaSeqCDR3[i:500])
+#
+#
 
 
-airr_file.drop(ids_dropped, inplace=True)
-airr_file.reset_index(inplace=True, drop=True)
+# ###### concat the sequences and upper case everything!
+# cols_to_concat = ['aaSeqImputedFR1', 'aaSeqImputedCDR1', 'aaSeqImputedFR2', 'aaSeqImputedCDR2', 'aaSeqImputedFR3', 'aaSeqImputedCDR3', 'aaSeqImputedFR4']
+#
+# from tqdm import tqdm
+#
+# ids_dropped = []
+# for id in tqdm(range(len(mixcr_file_raw)), total=len(mixcr_file_raw)):
+#     try:
+#         mixcr_file_raw.loc[id, "VDJ_aaSeq"] = ''.join([mixcr_file_raw.loc[id, c] for c in cols_to_concat])
+#     except:
+#         ids_dropped.append(id)
+#
+# print(ids_dropped)
+# mixcr_file_raw['productive'] = airr_file.productive
+# mixcr_file = mixcr_file_raw.drop(ids_dropped).copy()
+#
+# mixcr_file.reset_index(inplace=True, drop=True)
+# mixcr_file.VDJ_aaSeq = mixcr_file.VDJ_aaSeq.str.upper()
+#
+#
+# airr_file.drop(ids_dropped, inplace=True)
+# airr_file.reset_index(inplace=True, drop=True)
+#
 
-
-
-# # save dataframe since the for loop takes long
-mixcr_file.to_csv('/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/imgt_alignment/TEMP_PROCESSED_mixcr_VDJ_HEL.tsv',
-                  index=False)
+#
+# # # save dataframe since the for loop takes long
+# mixcr_file.to_csv('/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/imgt_alignment/TEMP_PROCESSED_mixcr_VDJ_HEL.tsv',
+#                   index=False)
 
 
 ########################################################################
@@ -165,23 +169,11 @@ mixcr_file.to_csv('/Users/lerlach/Documents/current_work/GP_publication/code_git
 #
 # clones_file2 == clones_file
 
-### airr_file just for comparison!
-airr_file['Vgene'] = [airr_file.v_call[i].split(',')[0] for i in range(len(airr_file))]
-airr_file['Jgene'] = [airr_file.j_call[i].split(',')[0] for i in range(len(airr_file))]
-airr_file['VJgeneID'] = ['_'.join([airr_file.loc[i, 'Vgene'], airr_file.loc[i, 'Jgene']]) for i in range(len(airr_file))]
+# ### airr_file just for comparison!
+# airr_file['Vgene'] = [airr_file.v_call[i].split(',')[0] for i in range(len(airr_file))]
+# airr_file['Jgene'] = [airr_file.j_call[i].split(',')[0] for i in range(len(airr_file))]
+# airr_file['VJgeneID'] = ['_'.join([airr_file.loc[i, 'Vgene'], airr_file.loc[i, 'Jgene']]) for i in range(len(airr_file))]
 
-
-# cluster by identical VDJ germline hits - work with mixcr file!!
-mixcr_file['Vgene'] = [mixcr_file['allVHitsWithScore'][i].split(',')[0].split(r'(')[0] for i in range(len(mixcr_file))]
-mixcr_file['Jgene'] = [mixcr_file['allJHitsWithScore'][i].split(',')[0].split(r'(')[0] for i in range(len(mixcr_file))]
-mixcr_file['seq_id'] = mixcr_file.index.values
-
-### group by V and J gene columns
-mixcr_file['VJgeneID'] = ['_'.join([mixcr_file.loc[i, 'Vgene'], mixcr_file.loc[i, 'Jgene']]) for i in range(len(mixcr_file))]
-
-# drop not productive sequences!
-mixcr_file_prod = mixcr_file[mixcr_file['productive'] != 'F']
-len(mixcr_file)
 
 
 
@@ -215,6 +207,20 @@ def calc_norm_levens_dist(seqs: list, verbose=1):
     return dist_matrix
 
 
+# cluster by identical VDJ germline hits - work with mixcr file!!
+mixcr_file['Vgene'] = [mixcr_file['allVHitsWithScore'][i].split(',')[0].split(r'(')[0] for i in range(len(mixcr_file))]
+mixcr_file['Jgene'] = [mixcr_file['allJHitsWithScore'][i].split(',')[0].split(r'(')[0] for i in range(len(mixcr_file))]
+mixcr_file['seq_id'] = mixcr_file.index.values
+
+### group by V and J gene columns
+mixcr_file['VJgeneID'] = ['_'.join([mixcr_file.loc[i, 'Vgene'], mixcr_file.loc[i, 'Jgene']]) for i in range(len(mixcr_file))]
+
+# drop not productive sequences!
+mixcr_file_prod = mixcr_file[mixcr_file['productive'] != 'F']
+len(mixcr_file)
+
+
+
 
 
 VJgene_combs = np.unique(mixcr_file_prod.VJgeneID)
@@ -245,14 +251,15 @@ for vf in tqdm(VJgene_combs, total=len(VJgene_combs)):
         mixcr_file_prod.loc[clusters.index, 'clone_id'] = clusters.values + np.max(mixcr_file_prod['clone_id'])
 
 
-# # # save dataframe since the for loop takes long
-# mixcr_file.to_csv('/Users/lerlach/Documents/current_work/GP_publication/code_git/Lena/Predict_natural_vars/data/imgt_alignment/TEMP_PROCESSED_mixcr_VDJ_HEL_clonotyped_80CDR3sim.tsv',
-#                   index=False)
+# # save dataframe since the for loop takes long
+mixcr_file_prod.to_csv(os.path.join(ROOT_DIR_PROCESSED, 'TEMP_mixcr_VDJ_HEL_clonotyped_80CDR3sim.csv'),
+                  index=False)
 
 
 ########################################################################
-# Clonotyping based on V and J gene identity and 80% CDR3 similarity
+# Check file!
 ########################################################################
+
 
 len(mixcr_file_prod.VDJ_aaSeq[mixcr_file_prod.clone_id == 3])
 len(np.unique(mixcr_file_prod.VDJ_aaSeq[mixcr_file_prod.clone_id == 3]))
