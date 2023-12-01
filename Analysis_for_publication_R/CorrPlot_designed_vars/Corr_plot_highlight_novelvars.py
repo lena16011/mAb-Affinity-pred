@@ -79,10 +79,10 @@ def run():
     #### SET MODEL PARAMETERS ####
     # test the framework
     # model names for saving files etc.
-    model_names = ["GaussianProcess_RBF", "GaussianProcess_Matern",
-                   "KernelRidge",
-                   "RandomForestRegression",
-                   "OrdinalLinearRegression"
+    model_names = ["GaussianProcess_RBF"#, "GaussianProcess_Matern",
+                   # "KernelRidge",
+                   # "RandomForestRegression",
+                   # "OrdinalLinearRegression"
     ]
     # list of parameters to test per model (take care of order!)
     param_list = [{'regressor__kernel': [None, RBF()],
@@ -116,6 +116,9 @@ def run():
     test_score_df = pd.DataFrame(columns=['Model', 'R2', 'Corr_coef', 'MSE'])
     prediction_df = pd.DataFrame(columns=['IDs', 'VDJ_AA', 'y', 'y_pred', 'train_label', 'y_var', 'Model'])
 
+    s_figs = False
+
+
     #### LOOP THROUGH ALL THE MODELS ####
     for i, model_name in enumerate(model_names):
 
@@ -137,7 +140,7 @@ def run():
 
         kernel = REV.regression_model_evaluation(X_train, y_train.reshape(-1,), reg, model_name, metrics)
 
-        kernel.k_CV_and_plot(param_grid, k=len(X_train), plot = True, save_fig=True, x_lim=lim, x_std=2,
+        kernel.k_CV_and_plot(param_grid, k=len(X_train), plot = True, save_fig=s_figs, x_lim=lim, x_std=2,
                                                       y_lim=lim, w_vars = w_vars,
                                                       save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
 
@@ -179,7 +182,7 @@ def run():
             # adjust correlation plot for highlighting the novel sequences
             GP.corr_var_plot_highlighted(measured_train = kernel.y, predicted_train = kernel.y_pred, vars_train = kernel.vars, x_std=2,
                                          measured_test = y_test, predicted_test = y_test_pred,x_lim = lim, y_lim = lim,
-                                         vars_test = y_test_vars, legend=True, R2=r2, cor_coef=cor_coef, MSE=MSE, save_fig = True,
+                                         vars_test = y_test_vars, legend=True, R2=r2, cor_coef=cor_coef, MSE=MSE, save_fig = s_figs,
                                          out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highlighted.pdf'))
 
 
@@ -207,7 +210,7 @@ def run():
         GP.corr_var_plot_highlighted_extended(y, y_pred, y_var, label_n, y_test_set_dict, y_pred_test_set_dict,
                                                y_var_test_set_dict, x_std=2, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a'],
                                                x_lim=lim, y_lim=lim, errbar=True, std_scatter = False,
-                                               std_scatter_test = False, save_fig=True, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar_only_rat.pdf'))
+                                               std_scatter_test = False, save_fig=s_figs, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar_only_rat.pdf'))
 
 
         #### MAKE CORRELATION PLOT WITH THE TEST SET HIGHLIGHTED BY CATEGORY - with the random designed variants ####
@@ -237,7 +240,7 @@ def run():
         GP.corr_var_plot_highlighted_extended(y, y_pred, y_var, label_n, y_test_set_dict, y_pred_test_set_dict,
                                                y_var_test_set_dict, x_std=1, colors = ['#e01212', '#1f1fab', '#0f6e02', '#f2c40a', '#6f07b0'],
                                                x_lim=lim, y_lim=lim, errbar = True, std_scatter = False,
-                                               std_scatter_test = False, save_fig=True, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar.pdf'))
+                                               std_scatter_test = False, save_fig=s_figs, out_file=os.path.join(dir_out, 'Corr_plot_with_testset_highl_errbar.pdf'))
 
         print("--------------------------------------------------------")
         print("DONE with " + model_name)

@@ -17,7 +17,8 @@ import seaborn as sns
 from scipy.stats import ttest_ind
 
 ###### BOX PLOT - FUNCTION ######
-def box_plot_KDs(data, x = None, y = None, groups=None, color_palette = 'Paired', fig_size = (6, 8), save_fig = None):
+def box_plot_KDs(data, xy1, xy2, xy3, x = None, y = None, groups=None, color_palette = 'Paired', fig_size = (6, 8),
+                 save_fig = None):
     '''
     Function to plot the KD values as a box plot with whiskers, no fliers
     params:
@@ -32,13 +33,25 @@ def box_plot_KDs(data, x = None, y = None, groups=None, color_palette = 'Paired'
     returns: None
     '''
     if groups != None:
-        # statistical test btw KD values
-        group1 = data[y][data[x] == groups[0]]
-        group2 = data[y][data[x] == groups[1]]
-        # Run the t-test
-        t = ttest_ind(group1, group2)
-        # The t-test returns 2 values: the test statistic and the pvalue
-        #print(np.round(t[1], 5))
+        if len(groups) == 2:
+            # statistical test btw KD values
+            group1 = data[y][data[x] == groups[0]]
+            group2 = data[y][data[x] == groups[1]]
+            # Run the t-test
+            t = ttest_ind(group1, group2)
+            # The t-test returns 2 values: the test statistic and the pvalue
+            #print(np.round(t[1], 5))`
+        elif len(groups) == 3:
+            # statistical test btw KD values
+            group1 = data[y][data[x] == groups[0]]
+            group2 = data[y][data[x] == groups[1]]
+            group3 = data[y][data[x] == groups[2]]
+            # Run the t-test
+            t1 = ttest_ind(group1, group2)
+            t2 = ttest_ind(group1, group3)
+            t3 = ttest_ind(group2, group3)
+            # The t-test returns 2 values: the test statistic and the pvalue
+            #print(np.round(t[1], 5))`
 
 
     # setup a box plot with the original sequences
@@ -69,7 +82,12 @@ def box_plot_KDs(data, x = None, y = None, groups=None, color_palette = 'Paired'
         # Set the plot title and font size
         plt.suptitle("kD values of selected & novel mAb variants", fontsize=16)
         # subtitle
-        b.set_title("p-value = {}".format(np.round(t[1], 5)), fontsize = 14)
+        if len(groups) == 2:
+            b.set_title(f'p-value = {np.round(t[1], 5)}', fontsize=14)
+        elif len(groups) == 3:
+            b.annotate(f'p-value = {np.round(t1[1], 5)}', xy=xy1, fontsize=12)
+            b.annotate(f'p-value = {np.round(t2[1], 5)}', xy = xy2, fontsize=12)
+            b.annotate(f'p-value = {np.round(t3[1], 5)}', xy=xy3, fontsize=12)
     else:
         # Set the plot title and font size
         b.set_title("kD values of the selected mAb variants", fontsize=16)
@@ -79,6 +97,12 @@ def box_plot_KDs(data, x = None, y = None, groups=None, color_palette = 'Paired'
     if save_fig != None:
         plt.savefig(save_fig)
     plt.show()
+
+
+
+
+
+
 
 
 ###### SET INPUT DIRECTORIES & LOAD DATA ######
@@ -108,6 +132,12 @@ KD_seqs_novel["dataset"] = "novel_selected"
 KD_merge = pd.concat([KD_seqs_orig, KD_seqs_novel])
 KD_merge = KD_merge.dropna(subset=['KD_nM'])
 
+# drop the loLD sequences
+KD_rational = KD_merge[(KD_merge['label'] != 'loLD_mid') & (KD_merge['label'] != 'loLD_pos') & (KD_merge['label'] != 'germ_line_HC50')]
+
+
+
+
 
 ###### BOX PLOT - COMBINED SEQUENCES ######
 color_palette = ['#1874cd','#cd0000']
@@ -121,4 +151,21 @@ box_plot_KDs(KD_seqs_orig, x = None, y = "KD_nM", groups=None,
 ###### BOX PLOT - NOVEL SEQUENCES ######
 box_plot_KDs(KD_seqs_novel, x = None, y = "KD_nM", groups=None,
              color_palette = ['#cd0000'], fig_size = (5.5,8), save_fig = os.path.join(save_path, 'KD_novel_variants.pdf'))
+
+
+
+
+#005A9C,
+###### BOX PLOT - COMBINED SEQUENCES - sep seq bins ######
+color_palette = ['#1874cd', '#cd0000', '#228B22']
+groups = ['originally_selected', 'hiKD_rat', 'loKD_rat']
+box_plot_KDs(KD_rational, x = "label", y = "KD_nM", groups=groups, fig_size = (6,8.5),
+             color_palette = color_palette, xy1=(-0.1, 5.15), xy3=(1.4, 5.15), xy2= (0.7, 5.33),
+             save_fig =  os.path.join(save_path, 'KD_novel_variants_binned_pval.pdf'))
+
+box_plot_KDs(KD_rational, x = "label", y = "KD_nM", groups=None, fig_size = (6,8.5),
+             color_palette = color_palette, xy1=(-0.1, 5.15), xy3=(1.4, 5.15), xy2= (0.7, 5.33),
+             save_fig =  os.path.join(save_path, 'KD_novel_variants_binned.pdf'))
+
+
 

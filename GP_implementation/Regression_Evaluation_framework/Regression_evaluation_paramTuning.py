@@ -402,7 +402,7 @@ def run():
 
     # ###### SET MODEL AND PARAMETERS #####
     random.seed(123)
-    randomized = True # set true to run the models with randomized labels for evaluation
+    randomized = False # set true to run the models with randomized labels for evaluation
     log_transform = True # test if the models predict differently
 
     k_inner = 5
