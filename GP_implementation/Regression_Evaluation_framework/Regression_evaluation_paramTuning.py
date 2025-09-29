@@ -6,23 +6,25 @@ Lena Erlach
 """
 
 
-import pandas as pd
-import numpy as np
 import os
+import random
+import warnings
+
+import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
-from utils import GP_fcts as GP
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.model_selection import KFold, GridSearchCV, cross_val_predict
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.gaussian_process.kernels import Matern, RBF
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern, RBF
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_predict
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-import warnings, random
-# Suppress the warning from sklearn.metrics module
-from sklearn.exceptions import UndefinedMetricWarning
+
+from utils import GP_fcts as GP
 
 
 
