@@ -159,14 +159,7 @@ k_outer = 5
 verbose = 1
 n_jobs = -1
 
-
-
 s_fig = True
-
-
-
-
-
 
 
 
@@ -203,9 +196,6 @@ data_test["expressed"] = False
 data_test.loc[~data_test['KD_nM'].isna(), 'expressed'] = True
 
 data_test["min_ED_to_train"] = min_ED_seqs(data_train['Sequence'].values, data_test['VDJ_AA'].values).astype(int)
-
-
-
 
 
 
@@ -260,8 +250,6 @@ y_test = np.log(y_test + 1)
 # # natural variants
 # X_natvar = native_sel_seqs_u
 # X_natvar_OH = GP.one_hot_encode_matern(X_natvar)
-
-
 
 
 
