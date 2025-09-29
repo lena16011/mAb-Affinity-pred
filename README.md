@@ -2,7 +2,7 @@
 
 Analysis, sequence selection and prediction of antibody affinity for monoclonal antibody (mAb) variants from antibody repertoire data. This repository accompanies the preprint:
 
-- Predicting affinity in monoclonal antibody variants and native repertoires — see the preprint on bioRxiv: [https://www.biorxiv.org/content/10.1101/2025.01.10.632313v1](https://www.biorxiv.org/content/10.1101/2025.01.10.632313v1)
+- Antibody affinity engineering using antibody repertoire data and machine learning — see the preprint on bioRxiv: [https://www.biorxiv.org/content/10.1101/2025.01.10.632313v1](https://www.biorxiv.org/content/10.1101/2025.01.10.632313v1)
 
 ### Repository layout
 - `VDJ_Sequence_Selection/`: scripts for CDR3/VDJ similarity, clustering, and network visualizations
