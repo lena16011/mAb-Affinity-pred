@@ -1,6 +1,7 @@
 import pandas as pd
 import stringdist
 import numpy as np
+import argparse
 
 '''
 Script for calculating some statistics from the final selection of the CDR3 sequences (26).
@@ -112,89 +113,81 @@ def ebunch_norm(seqs_lst, LD = None):
 
 
 
-file_in = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/VDJ_selection/original_data/overlap_AP_clustering_simfilt80.txt'
-data_cdr3 = pd.read_csv(file_in, sep='\t')
+def run(cdr3_file, vdj_file):
+    data_cdr3 = pd.read_csv(cdr3_file, sep='\t')
 
-# get the CDR3s as list
-seq_lst = list(data_cdr3.CDR3_AA)
+    # get the CDR3s as list
+    seq_lst = list(data_cdr3.CDR3_AA)
 
-# calculate norm distance matrix
-dist_norm = calculate_norm_dist_matrix(seq_lst)
+    # calculate norm distance matrix
+    dist_norm = calculate_norm_dist_matrix(seq_lst)
 
-# calculate LD distance matrix
-dist_LD = calculate_LD_dist_matrix(seq_lst)
+    # calculate LD distance matrix
+    dist_LD = calculate_LD_dist_matrix(seq_lst)
+
+    # create ebunches to calculate stats
+    eb = ebunch_LD(seq_lst)
+    mean_LD = np.mean([eb[x][2] for x in range(len(eb))])
+    max_LD = max([eb[x][2] for x in range(len(eb))])
+
+    # similarity
+    eb_norm = ebunch_norm(seq_lst)
+    mean_sim = 1 - np.mean([eb_norm[x][2] for x in range(len(eb_norm))])
+    min_sim = min([1 - eb_norm[x][2] for x in range(len(eb_norm))])
+    max_sim = max([1 - eb_norm[x][2] for x in range(len(eb_norm))])
+
+    # print the stats
+    print("# selected CDR3s", '\t', len(dist_LD))
+    print("length of CDR3s", '\t', np.unique([len(x) for x in seq_lst]))
+
+    print("range of selected LDs", '\t', np.unique(dist_LD))
+    print("mean LD", '\t', mean_LD)
+    print("max LD", '\t', max_LD)
+
+    print("mean Similarity", '\t', mean_sim)
+    print("min Similarity", '\t', min_sim)
+    print("max Similarity", '\t', max_sim)
+
+    # repeat with the final VDJs
+    data = pd.read_csv(vdj_file, sep='\t')
+
+    # get the CDR3s as list
+    seq_lst = list(data.VDJ_AA)
+
+    # calculate norm distance matrix
+    dist_norm = calculate_norm_dist_matrix(seq_lst)
+
+    # calculate LD distance matrix
+    dist_LD = calculate_LD_dist_matrix(seq_lst)
+
+    # create ebunches to calculate stats
+    eb = ebunch_LD(seq_lst)
+    mean_LD = np.mean([eb[x][2] for x in range(len(eb))])
+    max_LD = max([eb[x][2] for x in range(len(eb))])
+
+    # similarity
+    eb_norm = ebunch_norm(seq_lst)
+    mean_sim = 1 - np.mean([eb_norm[x][2] for x in range(len(eb_norm))])
+    min_sim = min([1 - eb_norm[x][2] for x in range(len(eb_norm))])
+    max_sim = max([1 - eb_norm[x][2] for x in range(len(eb_norm))])
+
+    # print the stats
+    print("# selected VDJss", '\t', len(dist_LD))
+    print("length of VDJs", '\t', np.unique([len(x) for x in seq_lst]))
+
+    print("range of selected LDs", '\t', np.unique(dist_LD))
+    print("mean LD", '\t', mean_LD)
+    print("max LD", '\t', max_LD)
+
+    print("mean Similarity", '\t', mean_sim)
+    print("min Similarity", '\t', min_sim)
+    print("max Similarity", '\t', max_sim)
 
 
-# create ebunches to calculate stats
-eb = ebunch(seq_lst)
-mean_LD = np.mean([eb[x][2] for x in range(len(eb))])
-max_LD = max([eb[x][2] for x in range(len(eb))])
-
-# similarity
-eb_norm = ebunch_norm(seq_lst)
-mean_sim = 1 - np.mean([eb_norm[x][2] for x in range(len(eb_norm))])
-min_sim = min([1-eb_norm[x][2] for x in range(len(eb_norm))])
-max_sim = max([1-eb_norm[x][2] for x in range(len(eb_norm))])
-
-
-# print the stats
-print("# selected CDR3s",'\t',len(dist_LD))
-print("length of CDR3s",'\t',np.unique([len(x) for x in seq_lst]))
-
-print("range of selected LDs",'\t',np.unique(dist_LD))
-print("mean LD",'\t',mean_LD)
-print("max LD",'\t',max_LD)
-
-print("mean Similarity",'\t',mean_sim)
-print("min Similarity",'\t',min_sim)
-print("max Similarity",'\t',max_sim)
-
-# print a sequence list
-[print(x) for x in seq_lst]
-
-
-
-### repeat with the final VDJs
-
-
-file_in = '/media/lena/LENOVO/Dokumente/Masterarbeit/data/VDJ_selection/VDJ_final_data/final_50_selection/final_50_selection_data_115AA.txt'
-data = pd.read_csv(file_in, sep='\t')
-
-# get the CDR3s as list
-seq_lst = list(data.VDJ_AA)
-
-# calculate norm distance matrix
-dist_norm = calculate_norm_dist_matrix(seq_lst)
-
-# calculate LD distance matrix
-dist_LD = calculate_LD_dist_matrix(seq_lst)
-
-
-# create ebunches to calculate stats
-eb = ebunch_LD(seq_lst)
-mean_LD = np.mean([eb[x][2] for x in range(len(eb))])
-max_LD = max([eb[x][2] for x in range(len(eb))])
-
-# similarity
-eb_norm = ebunch_norm(seq_lst)
-mean_sim = 1 - np.mean([eb_norm[x][2] for x in range(len(eb_norm))])
-min_sim = min([1-eb_norm[x][2] for x in range(len(eb_norm))])
-max_sim = max([1-eb_norm[x][2] for x in range(len(eb_norm))])
-
-
-# print the stats
-print("# selected VDJss",'\t',len(dist_LD))
-print("length of VDJs",'\t',np.unique([len(x) for x in seq_lst]))
-
-print("range of selected LDs",'\t',np.unique(dist_LD))
-print("mean LD",'\t',mean_LD)
-print("max LD",'\t',max_LD)
-
-print("mean Similarity",'\t',mean_sim)
-print("min Similarity",'\t',min_sim)
-print("max Similarity",'\t',max_sim)
-
-# print a sequence list
-[print(x) for x in seq_lst]
-
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='CDR3/VDJ distance statistics')
+    parser.add_argument('--cdr3-file', required=True, help='Path to CDR3 input TSV')
+    parser.add_argument('--vdj-file', required=True, help='Path to VDJ input TSV')
+    args = parser.parse_args()
+    run(args.cdr3_file, args.vdj_file)
 

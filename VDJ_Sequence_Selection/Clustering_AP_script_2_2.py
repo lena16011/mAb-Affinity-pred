@@ -22,7 +22,7 @@ dist_matrix_df = pd.DataFrame(dist_matrix)
 sim_matrix = 1 - dist_matrix
 
 # make the matrix symmetric
-sim_matrix = sim_matrix.fillna(value=0).as_matrix()
+sim_matrix = sim_matrix.fillna(value=0).to_numpy()
 sim_matrix = np.tril(sim_matrix, -1) + np.tril(sim_matrix).T
 
 

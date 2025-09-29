@@ -7,7 +7,7 @@ file_name = 'uniqCDR3_DistMatrix.txt'
 dist_matrix_CDR3 = pd.read_csv(file_name, sep='\t', dtype=np.float16, index_col=0,
                                     low_memory=True)
 # make the matrix symmetric
-dist_matrix_CDR3 = dist_matrix_CDR3.fillna(value='0').as_matrix()
+dist_matrix_CDR3 = dist_matrix_CDR3.fillna(value=0).to_numpy()
 dist_matrix_CDR3 = np.tril(dist_matrix_CDR3) + np.tril(dist_matrix_CDR3).T
 
 ### Agglomerative Clustering
