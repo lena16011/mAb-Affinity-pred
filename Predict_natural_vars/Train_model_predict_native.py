@@ -13,15 +13,17 @@ Lena Erlach
 17.11.2023
 """
 
-import pandas as pd
-import numpy as np
 import os
+import random
+import warnings
+
+import numpy as np
+import pandas as pd
 import utils.GP_fcts as GP
-import warnings, random
 import matplotlib.pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel, Matern
+from sklearn.gaussian_process.kernels import Matern, RBF, WhiteKernel
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -110,7 +112,7 @@ class GP_train_predict():
         # gp = GaussianProcessRegressor(random_state=123, n_restarts_optimizer=5)
         pipeline = Pipeline([
             ('scaler', self.scaler),
-            ('regressor', reg)
+            ('regressor', self.reg)
         ])
 
 
@@ -270,93 +272,97 @@ y_test = np.log(y_test + 1)
 ##################           MODEL SETUP           ##################
 #########################################################################################################
 
-gp = GP_train_predict()
+def main():
+    gp = GP_train_predict()
 
-gp_trained = gp.train_model(X_train_OH, y_train, k=5,
-                    param_grid = {'regressor__kernel': [RBF(l) for l in np.logspace(-1, 1, 3)], 'regressor__alpha': [1e-10, 1e-3, 0.1]},
-                    scoring=None)
+    gp_trained = gp.train_model(X_train_OH, y_train, k=5,
+                        param_grid = {'regressor__kernel': [RBF(l) for l in np.logspace(-1, 1, 3)], 'regressor__alpha': [1e-10, 1e-3, 0.1]},
+                        scoring=None)
 
+    y_pred, y_var = gp.best_model.predict(X_test_OH, return_std = True)
 
-y_pred, y_var = gp.best_model.predict(X_test_OH, return_std = True)
-
-data_test['y_pred'] = np.expm1(y_pred)
-data_test['y_var'] = y_var
-
-
-
-
-#########################################################################################################
-##################           CORRELATION PLOTS           ##################
-#########################################################################################################
-
-
-
-##### Correlation plot - kD_nM
-plt.scatter(data_test['y_pred'][data_test['expressed'] == False], [0] * len(data_test['y_pred'][data_test['expressed'] == False]),
-            color='k', label='not expressed')
-plt.scatter(data_test['y_pred'][data_test['expressed'] == True], data_test['KD_nM'][data_test['expressed'] == True],
-            color= '#1874cd', label='expressed')
-
-
-xs = data_test['y_pred'][data_test['expressed'] == True].values
-ys = data_test['KD_nM'][data_test['expressed'] == True].values
-txts = data_test['min_ED_to_train'][data_test['expressed'] == True].values
-
-
-plt.ylabel("measured")
-plt.xlabel("predicted")
-plt.title('predicted and measured kD_nM')
-plt.legend()
-plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr.pdf'))
-# Loop for annotation of all points
-for i in range(len(xs)):
-    plt.annotate(txts[i], (xs[i], ys[i] + 0.1))
-
-plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr_withEDs.pdf'))
-plt.show()
+    data_test['y_pred'] = np.expm1(y_pred)
+    data_test['y_var'] = y_var
 
 
 
 
+    #########################################################################################################
+    #################           CORRELATION PLOTS           ##################
+    #########################################################################################################
 
 
-##### Correlation plot - log(kD_nM)
-plt.scatter(y_pred[data_test['expressed'] == False], [0] * len(y_test[data_test['expressed'] == False]),
-            color='k', label='not expressed')
-plt.scatter(y_pred[data_test['expressed'] == True], y_test[data_test['expressed'] == True],
-            color='#1874cd', label='expressed')
-plt.ylabel("measured")
-plt.xlabel("predicted")
-plt.title('predicted and measured log(kD_nM + 1)')
-plt.legend()
-plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr_logKDs.pdf'))
 
-xs = y_pred[data_test['expressed'] == True]
-ys = y_test[data_test['expressed'] == True]
-txts = data_test['min_ED_to_train'][data_test['expressed'] == True].values
+    ##### Correlation plot - kD_nM
+    plt.scatter(data_test['y_pred'][data_test['expressed'] == False], [0] * len(data_test['y_pred'][data_test['expressed'] == False]),
+                color='k', label='not expressed')
+    plt.scatter(data_test['y_pred'][data_test['expressed'] == True], data_test['KD_nM'][data_test['expressed'] == True],
+                color= '#1874cd', label='expressed')
 
-# Loop for annotation of all points
-for i in range(len(xs)):
-    plt.annotate(txts[i], (xs[i], ys[i] + 0.05))
-plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr_logKDs_withEDs.pdf'))
-plt.show()
+
+    xs = data_test['y_pred'][data_test['expressed'] == True].values
+    ys = data_test['KD_nM'][data_test['expressed'] == True].values
+    txts = data_test['min_ED_to_train'][data_test['expressed'] == True].values
+
+
+    plt.ylabel("measured")
+    plt.xlabel("predicted")
+    plt.title('predicted and measured kD_nM')
+    plt.legend()
+    plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr.pdf'))
+    # Loop for annotation of all points
+    for i in range(len(xs)):
+        plt.annotate(txts[i], (xs[i], ys[i] + 0.1))
+
+    plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr_withEDs.pdf'))
+    plt.show()
 
 
 
 
 
-#########################################################################################################
-##################           HISTOGRAM OF KDS           ##################
-########################################################################################################
 
-y_pred_ex = data_test['y_pred'][data_test['expressed'] == True]
-y_pred_nex = data_test['y_pred'][data_test['expressed'] == False]
-plt.hist([y_pred_ex, y_pred_nex], color=['#000000', '#A9A9A9'], label=['expressed', 'not expressed'])
-plt.ylabel('count')
-plt.xlabel('predicted kD_nM values')
-plt.title('Predicted kDs')
-plt.legend()
-plt.show()
+    ##### Correlation plot - log(kD_nM)
+    plt.scatter(y_pred[data_test['expressed'] == False], [0] * len(y_test[data_test['expressed'] == False]),
+                color='k', label='not expressed')
+    plt.scatter(y_pred[data_test['expressed'] == True], y_test[data_test['expressed'] == True],
+                color='#1874cd', label='expressed')
+    plt.ylabel("measured")
+    plt.xlabel("predicted")
+    plt.title('predicted and measured log(kD_nM + 1)')
+    plt.legend()
+    plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr_logKDs.pdf'))
+
+    xs = y_pred[data_test['expressed'] == True]
+    ys = y_test[data_test['expressed'] == True]
+    txts = data_test['min_ED_to_train'][data_test['expressed'] == True].values
+
+    # Loop for annotation of all points
+    for i in range(len(xs)):
+        plt.annotate(txts[i], (xs[i], ys[i] + 0.05))
+    plt.savefig(os.path.join(dir_out, 'Correlation_plot_novelvars_with_noexpr_logKDs_withEDs.pdf'))
+    plt.show()
+
+
+
+
+
+
+    #########################################################################################################
+    #################           HISTOGRAM OF KDS           ##################
+    ########################################################################################################
+
+    y_pred_ex = data_test['y_pred'][data_test['expressed'] == True]
+    y_pred_nex = data_test['y_pred'][data_test['expressed'] == False]
+    plt.hist([y_pred_ex, y_pred_nex], color=['#000000', '#A9A9A9'], label=['expressed', 'not expressed'])
+    plt.ylabel('count')
+    plt.xlabel('predicted kD_nM values')
+    plt.title('Predicted kDs')
+    plt.legend()
+    plt.show()
+
+if __name__ == '__main__':
+    main()
 
 
 

@@ -12,23 +12,24 @@ Lena Erlach
 """
 
 
-import pandas as pd
-import numpy as np
 import os
+import random
+import warnings
+
+import numpy as np
+import pandas as pd
 import utils.GP_fcts as GP
-import warnings, random
-import matplotlib.pyplot as plt
-
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel, Matern
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+
+# Import evaluation class
+from GP_implementation.Regression_Evaluation_framework.Regression_evaluation_paramTuning import (
+    regression_model_evaluation as RegressionModelEvaluation,
+)
 
 
 
@@ -203,7 +204,7 @@ def run():
             os.makedirs(dir_out_eval)
 
         # define class model
-        kernel = REV.regression_model_evaluation(X_train_OH, y_train, reg, model_name, metrics)
+        kernel = RegressionModelEvaluation(X_train_OH, y_train, reg, model_name, metrics)
 
         ### EVALUATE Ks FOR CV
         print('Evaluate k')
@@ -215,7 +216,7 @@ def run():
         non_nested_cv_df, nested_cv_df, scores_df = kernel.nested_param_tuning_eval(param_grid, k_o=k_outer, k_i=k_inner,
                                                                                     n_jobs = n_jobs, verbose=verbose)
         # save scores dataframe
-        Nested_Scores_df = Nested_Scores_df.append(scores_df)
+        Nested_Scores_df = pd.concat([Nested_Scores_df, scores_df], ignore_index=True)
 
         ###### HYPERPARAMETER TUNING AND LOO-CV WITH BEST PERFORMING PARAMETERS #####
         ### LOO CV
@@ -224,7 +225,7 @@ def run():
                                               y_lim=[-0.5,2.5], w_vars = w_vars,
                                               save_path=os.path.join(dir_out, model_name+'_corr_plot.pdf'))
 
-        LOO_Scores_df = LOO_Scores_df.append(model_score_df)
+        LOO_Scores_df = pd.concat([LOO_Scores_df, model_score_df], ignore_index=True)
         ##########################################################################################################
         print("--------------------------------------------------------")
         print("DONE with " + model_name)
@@ -254,7 +255,7 @@ def run():
         dir_out = os.path.join(dir_out_model, model_name)
 
         # define class model
-        kernel = REV.regression_model_evaluation(X_train_OH, y_train, reg, model_name, metrics)
+        kernel = RegressionModelEvaluation(X_train_OH, y_train, reg, model_name, metrics)
 
         print('\nPerform LOO-CV and make correlation plot')
         model_score_df = kernel.k_CV_and_plot(param_grid, k=len(X_train_OH), plot = True, save_fig=s_fig, x_lim=[-0.5,2.5],
